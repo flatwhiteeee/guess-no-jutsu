@@ -7,7 +7,16 @@ const registerRoomHandlers = require("./socket/roomHandlers");
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://guess-no-jutsu.vercel.app",
+    ],
+    credentials: true,
+  }),
+);
 
 const server = http.createServer(app);
 
@@ -16,7 +25,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
-      "https://guess-no-jutsu.vercel.app/",
+      "https://guess-no-jutsu.vercel.app",
     ],
     methods: ["GET", "POST"],
     credentials: true,
