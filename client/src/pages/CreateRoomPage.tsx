@@ -12,7 +12,7 @@ export default function CreateRoomPage() {
   const playerName = localStorage.getItem("playerName") || "Player";
   const [creating, setCreating] = useState(false);
   const handleCreate = () => {
-    console.log("CLICK CREATE");
+    console.log("HANDLE CREATE DIPANGGIL");
 
     if (creating) return;
 
