@@ -12,9 +12,13 @@ export default function CreateRoomPage() {
   const playerName = localStorage.getItem("playerName") || "Player";
   const [creating, setCreating] = useState(false);
   const handleCreate = () => {
+    console.log("CLICK CREATE");
+
     if (creating) return;
 
     setCreating(true);
+
+    console.log("EMIT CREATE");
 
     socket.emit("create-room", {
       playerName,
@@ -22,13 +26,14 @@ export default function CreateRoomPage() {
       difficulty,
       maxPlayers,
     });
-    socket.once("room-created", (roomCode: string) => {
+
+    socket.once("room-created", (roomCode) => {
+      console.log("ROOM CREATED", roomCode);
+
       setCreating(false);
 
       navigate("/lobby", {
-        state: {
-          roomCode,
-        },
+        state: { roomCode },
       });
     });
   };

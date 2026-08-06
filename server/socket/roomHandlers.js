@@ -27,13 +27,16 @@ function registerRoomHandlers(io, socket) {
   // CREATE ROOM
   // =========================
   socket.on("create-room", (settings) => {
+    console.log("CREATE ROOM EVENT");
+    console.log(settings);
+
     const roomCode = createRoom(socket.id, settings);
+
+    console.log(roomCode);
 
     socket.join(roomCode);
 
     socket.emit("players-updated", getPlayers(roomCode));
-
-    console.log("Room Created:", roomCode);
 
     socket.emit("room-created", roomCode);
   });
