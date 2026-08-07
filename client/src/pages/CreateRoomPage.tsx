@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DifficultySelector from "../features/room/components/DifficultySelector";
 import CategorySelector from "../features/room/components/CategorySelector";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,28 @@ export default function CreateRoomPage() {
   const navigate = useNavigate();
   const playerName = localStorage.getItem("playerName") || "Player";
   const [creating, setCreating] = useState(false);
+  useEffect(() => {
+    const handleSessionCreated = ({ roomCode, sessionId }: any) => {
+      console.log("SESSION CREATED", {
+        roomCode,
+        sessionId,
+      });
+
+      localStorage.setItem(
+        "guess-no-jutsu-session",
+        JSON.stringify({
+          roomCode,
+          sessionId,
+        }),
+      );
+    };
+
+    socket.on("session-created", handleSessionCreated);
+
+    return () => {
+      socket.off("session-created", handleSessionCreated);
+    };
+  }, []);
   const handleCreate = () => {
     console.log("HANDLE CREATE DIPANGGIL");
 
@@ -41,7 +63,7 @@ export default function CreateRoomPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex justify-center items-center p-6">
       <div className="w-full max-w-md rounded-3xl bg-slate-900 p-6 space-y-6">
-        <h1 className="text-3xl font-bold">Create Room</h1>
+        <h1 className="text-center text-3xl font-bold">Create Room</h1>
 
         <CategorySelector value={category} onChange={setCategory} />
 

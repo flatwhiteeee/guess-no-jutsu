@@ -4,6 +4,8 @@ const {
   getPlayers,
   getRoomData,
   leaveRoom,
+  disconnectPlayer,
+  approveReconnect,
   toggleReady,
   canStartGame,
   startGame,
@@ -39,14 +41,39 @@ function registerRoomHandlers(io, socket) {
     socket.emit("players-updated", getPlayers(roomCode));
 
     socket.emit("room-created", roomCode);
+    const room = getRoomData(roomCode);
+
+    const host = room.players.find((p) => p.id === socket.id);
+
+    socket.emit("session-created", {
+      roomCode,
+      sessionId: host.sessionId,
+    });
   });
 
   // =========================
   // JOIN ROOM
   // =========================
-  socket.on("join-room", ({ roomCode, playerName }) => {
-    const result = joinRoom(roomCode, socket.id, playerName);
+  socket.on("join-room", ({ roomCode, playerName, sessionId }) => {
+    const result = joinRoom(roomCode, socket.id, playerName, sessionId);
+    if (result.reconnect) {
+      console.log("RECONNECT REQUEST", {
+        roomCode,
+        player: result.player.name,
+      });
 
+      const room = getRoomData(roomCode);
+
+      if (!room) return;
+
+      io.to(room.host).emit("reconnect-request", {
+        playerName: result.player.name,
+        sessionId: result.player.sessionId,
+        socketId: socket.id,
+      });
+
+      return;
+    }
     if (!result.success) {
       socket.emit("join-failed", result.message);
       return;
@@ -59,6 +86,14 @@ function registerRoomHandlers(io, socket) {
     console.log("Player Joined:", roomCode);
 
     socket.emit("join-success", roomCode);
+    const room = getRoomData(roomCode);
+
+    const player = room.players.find((p) => p.id === socket.id);
+
+    socket.emit("session-created", {
+      roomCode,
+      sessionId: player.sessionId,
+    });
   });
 
   // =========================
@@ -230,7 +265,7 @@ function registerRoomHandlers(io, socket) {
       return;
     }
 
-    if (room.currentRound >= 8) {
+    if (room.currentRound >= 10) {
       const winners = room.players.filter((player) => player.solved);
 
       const losers = room.players.filter((player) => player.failed);
@@ -268,7 +303,7 @@ function registerRoomHandlers(io, socket) {
   // DISCONNECT
   // =========================
   socket.on("disconnect", () => {
-    const room = leaveRoom(socket.id);
+    const room = disconnectPlayer(socket.id);
 
     if (!room) return;
 
@@ -278,8 +313,39 @@ function registerRoomHandlers(io, socket) {
     }
 
     io.to(room.roomCode).emit("players-updated", room.players);
+    const currentTurn = room.turnOrder.length > 0 ? getCurrentTurn(room) : "";
+
+    io.to(room.roomCode).emit("game-state", {
+      room,
+      currentTurn,
+    });
 
     console.log("Player Left:", socket.id);
+  });
+  socket.on("approve-reconnect", ({ sessionId, socketId }) => {
+    const result = approveReconnect(sessionId, socketId);
+
+    if (!result.success) return;
+
+    const reconnectSocket = io.sockets.sockets.get(socketId);
+
+    if (!reconnectSocket) return;
+
+    reconnectSocket.join(result.room.roomCode);
+
+    const currentTurn = getCurrentTurn(result.room);
+
+    io.to(socketId).emit("reconnect-approved", {
+      room: result.room,
+      currentTurn,
+    });
+
+    io.to(result.room.roomCode).emit("game-state", {
+      room: result.room,
+      currentTurn,
+    });
+
+    console.log("RECONNECT BERHASIL:", result.player.name);
   });
   // =========================
   // SUBMIT ANSWER
@@ -360,7 +426,11 @@ function registerRoomHandlers(io, socket) {
       return;
     }
 
-    socket.emit("answer-result", result.correct);
+    if (!result.correct && result.player.failed) {
+      socket.emit("answer-result", "eliminated");
+    } else {
+      socket.emit("answer-result", result.correct);
+    }
 
     console.log(result.player.name, result.correct ? "CORRECT" : "WRONG");
   });

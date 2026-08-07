@@ -11,7 +11,19 @@ export default function PlayerCard({
 }: PlayerCardProps) {
   return (
     <div className="rounded-2xl bg-slate-800 p-5 space-y-2">
-      <h2 className="text-xl font-bold">{player.name}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">{player.name}</h2>
+
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-bold ${
+            player.connected
+              ? "bg-green-500/20 text-green-400"
+              : "bg-red-500/20 text-red-400"
+          }`}
+        >
+          {player.connected ? "🟢 Online" : "🔴 Offline"}
+        </span>
+      </div>
 
       <p>
         Character :

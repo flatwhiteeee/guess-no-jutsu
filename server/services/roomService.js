@@ -1,4 +1,5 @@
 const generateRoomCode = require("../utils/generateRoomCode");
+const crypto = require("crypto");
 const rooms = {};
 
 function createRoom(hostSocketId, settings) {
@@ -23,13 +24,14 @@ function createRoom(hostSocketId, settings) {
     players: [
       {
         id: hostSocketId,
+        sessionId: crypto.randomUUID(),
         name: settings.playerName,
 
         ready: false,
 
         character: null,
 
-        questionLeft: 8,
+        questionLeft: 10,
 
         answerLeft: 3,
 
@@ -37,6 +39,8 @@ function createRoom(hostSocketId, settings) {
         failed: false,
 
         answeredThisRound: false,
+
+        connected: true,
       },
     ],
   };
@@ -47,8 +51,35 @@ function createRoom(hostSocketId, settings) {
 function getRoom(roomCode) {
   return rooms[roomCode];
 }
-function joinRoom(roomCode, socketId, playerName) {
+function joinRoom(roomCode, socketId, playerName, sessionId = null) {
   const room = rooms[roomCode];
+
+  // Reconnect hanya berlaku ketika game sedang berjalan
+  if (room && room.status === "playing" && sessionId) {
+    const existingPlayer = room.players.find((p) => p.sessionId === sessionId);
+    console.log("=== RECONNECT DEBUG ===");
+
+    console.log("Input Player :", playerName);
+    console.log("Input Session:", sessionId);
+
+    console.log(
+      "Semua Player:",
+      room.players.map((p) => ({
+        name: p.name,
+        sessionId: p.sessionId,
+      })),
+    );
+
+    console.log("Matched:", existingPlayer?.name);
+
+    if (existingPlayer) {
+      return {
+        success: false,
+        reconnect: true,
+        player: existingPlayer,
+      };
+    }
+  }
 
   if (!room) {
     return {
@@ -73,13 +104,14 @@ function joinRoom(roomCode, socketId, playerName) {
 
   room.players.push({
     id: socketId,
+    sessionId: crypto.randomUUID(),
     name: playerName,
 
     ready: false,
 
     character: null,
 
-    questionLeft: 8,
+    questionLeft: 10,
 
     answerLeft: 3,
 
@@ -87,7 +119,15 @@ function joinRoom(roomCode, socketId, playerName) {
     failed: false,
 
     answeredThisRound: false,
+
+    connected: true,
   });
+  console.log(
+    room.players.map((p) => ({
+      name: p.name,
+      sessionId: p.sessionId,
+    })),
+  );
 
   return {
     success: true,
@@ -164,6 +204,52 @@ function leaveRoom(socketId) {
   return null;
 }
 
+function disconnectPlayer(socketId) {
+  for (const roomCode in rooms) {
+    const room = rooms[roomCode];
+
+    const player = room.players.find((p) => p.id === socketId);
+
+    if (!player) continue;
+
+    player.connected = false;
+
+    return room;
+  }
+
+  return null;
+}
+
+function approveReconnect(sessionId, newSocketId) {
+  for (const roomCode in rooms) {
+    const room = rooms[roomCode];
+
+    const player = room.players.find((p) => p.sessionId === sessionId);
+
+    if (!player) continue;
+
+    const oldSocketId = player.id;
+
+    player.id = newSocketId;
+    player.connected = true;
+
+    // Update turnOrder agar tetap menunjuk player yang benar
+    room.turnOrder = room.turnOrder.map((id) =>
+      id === oldSocketId ? newSocketId : id,
+    );
+
+    return {
+      success: true,
+      room,
+      player,
+    };
+  }
+
+  return {
+    success: false,
+  };
+}
+
 function canStartGame(roomCode, socketId) {
   const room = rooms[roomCode];
 
@@ -230,7 +316,7 @@ function resetGame(roomCode) {
     player.ready = false;
     player.character = null;
 
-    player.questionLeft = 8;
+    player.questionLeft = 10;
     player.answerLeft = 3;
 
     player.solved = false;
@@ -284,6 +370,14 @@ function checkAnswer(roomCode, socketId, answer) {
       player.failed = true;
     }
   } else {
+    if (player.questionLeft > 0) {
+      player.questionLeft--;
+    }
+
+    if (player.answerLeft > 0) {
+      player.answerLeft--;
+    }
+
     player.solved = true;
   }
 
@@ -313,6 +407,8 @@ module.exports = {
   isHost,
   toggleReady,
   leaveRoom,
+  disconnectPlayer,
+  approveReconnect,
   canStartGame,
   startGame,
   resetGame,

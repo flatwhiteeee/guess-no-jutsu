@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../lib/socket";
 
@@ -18,6 +18,33 @@ export default function JoinRoomPage() {
 
   const playerName = localStorage.getItem("playerName") || "Player";
   const [joining, setJoining] = useState(false);
+  useEffect(() => {
+    const handleSessionCreated = ({ roomCode, sessionId }: any) => {
+      localStorage.setItem(
+        "guess-no-jutsu-session",
+        JSON.stringify({
+          roomCode,
+          sessionId,
+        }),
+      );
+    };
+
+    socket.on("session-created", handleSessionCreated);
+    socket.on("reconnect-approved", (game) => {
+      console.log("RECONNECT DISETUJUI", game);
+
+      navigate("/game", {
+        state: {
+          game,
+        },
+      });
+    });
+
+    return () => {
+      socket.off("session-created", handleSessionCreated);
+      socket.off("reconnect-approved");
+    };
+  }, []);
 
   function showNotification(
     title: string,
@@ -49,7 +76,7 @@ export default function JoinRoomPage() {
 
       <div className="min-h-screen bg-slate-950 text-white flex justify-center items-center p-6">
         <div className="w-full max-w-md rounded-3xl bg-slate-900 p-6 space-y-6">
-          <h1 className="text-3xl font-bold">Join Room</h1>
+          <h1 className="text-center text-3xl font-bold">Join Room</h1>
 
           <input
             type="text"
@@ -68,10 +95,30 @@ export default function JoinRoomPage() {
 
               socket.off("join-success");
               socket.off("join-failed");
+              const savedSession = localStorage.getItem(
+                "guess-no-jutsu-session",
+              );
 
+              let sessionId = null;
+
+              if (savedSession) {
+                try {
+                  const session = JSON.parse(savedSession);
+
+                  if (session.roomCode === roomCode) {
+                    sessionId = session.sessionId;
+                  }
+                } catch {}
+              }
+              console.log("JOIN ROOM", {
+                roomCode,
+                playerName,
+                sessionId,
+              });
               socket.emit("join-room", {
                 roomCode,
                 playerName,
+                sessionId,
               });
 
               socket.once("join-success", async (roomCode) => {

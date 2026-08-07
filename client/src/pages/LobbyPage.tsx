@@ -114,7 +114,7 @@ export default function LobbyPage() {
             ← Back
           </button>
 
-          <h1 className="text-3xl font-bold">Lobby</h1>
+          <h1 className="text-center text-3xl font-bold">Lobby</h1>
 
           <div>
             <p className="text-slate-400">Room Code</p>
