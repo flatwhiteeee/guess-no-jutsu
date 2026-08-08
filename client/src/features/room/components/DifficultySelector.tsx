@@ -13,15 +13,15 @@ export default function DifficultySelector({
     <div className="space-y-3">
       <h2 className="text-lg font-semibold">Difficulty</h2>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-900/60 p-1">
         {difficulties.map((difficulty) => (
           <button
             key={difficulty}
             onClick={() => onChange(difficulty)}
-            className={`rounded-xl border p-3 transition ${
+            className={`rounded-lg p-3 font-medium transition-all ${
               value === difficulty
-                ? "bg-orange-500 border-orange-500 text-white"
-                : "bg-slate-800 border-slate-700 hover:bg-slate-700"
+                ? "bg-orange-500 text-white shadow-md"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
             }`}
           >
             {difficulty}
