@@ -35,6 +35,9 @@ function createRoom(hostSocketId, settings) {
 
         answerLeft: 3,
 
+        timerLeft: 10 * 60,
+        timerStartedAt: null,
+
         solved: false,
         failed: false,
 
@@ -114,6 +117,8 @@ function joinRoom(roomCode, socketId, playerName, sessionId = null) {
     questionLeft: 10,
 
     answerLeft: 3,
+    timerLeft: 10 * 60,
+    timerStartedAt: null,
 
     solved: false,
     failed: false,
@@ -212,6 +217,20 @@ function disconnectPlayer(socketId) {
 
     if (!player) continue;
 
+    // =========================
+    // HOST DISCONNECT
+    // =========================
+    if (room.host === socketId) {
+      room.roomClosed = true;
+
+      delete rooms[roomCode];
+
+      return room;
+    }
+
+    // =========================
+    // PLAYER BIASA DISCONNECT
+    // =========================
     player.connected = false;
 
     return room;
@@ -318,6 +337,9 @@ function resetGame(roomCode) {
 
     player.questionLeft = 10;
     player.answerLeft = 3;
+
+    player.timerLeft = 10 * 60;
+    player.timerStartedAt = null;
 
     player.solved = false;
     player.failed = false;

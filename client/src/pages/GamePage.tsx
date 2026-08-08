@@ -10,6 +10,7 @@ import GameNotes from "../components/game/GameNotes";
 export default function GamePage() {
   const { state } = useLocation();
   const [answer, setAnswer] = useState("");
+  const [currentTimeLeft, setCurrentTimeLeft] = useState(0);
   const [game, setGame] = useState<any>(state?.game);
   const [showRoomCode, setShowRoomCode] = useState(false);
   const [reconnectRequest, setReconnectRequest] = useState<any>(null);
@@ -56,6 +57,13 @@ export default function GamePage() {
       setWinners(data.winners || []);
       setLosers(data.losers || []);
       setGameFinished(true);
+    });
+    socket.on("time-expired", ({ playerName }) => {
+      showNotification(
+        "KEHABISAN WAKTU",
+        `${playerName} kehabisan waktu!`,
+        "red",
+      );
     });
     socket.on("play-again", () => {
       setGameFinished(false);
@@ -127,12 +135,45 @@ export default function GamePage() {
     return () => {
       socket.off("game-state");
       socket.off("game-finished");
+      socket.off("time-expired");
       socket.off("answer-result");
       socket.off("play-again");
       socket.off("room-closed");
       socket.off("reconnect-request");
     };
   }, []);
+
+  useEffect(() => {
+    if (!game) return;
+
+    const currentPlayer = game.room.players.find(
+      (player: any) => player.name === game.currentTurn,
+    );
+
+    if (!currentPlayer || !currentPlayer.timerStartedAt) {
+      setCurrentTimeLeft(currentPlayer?.timerLeft ?? 0);
+      return;
+    }
+
+    const updateTimer = () => {
+      const elapsedSeconds = Math.floor(
+        (Date.now() - currentPlayer.timerStartedAt) / 1000,
+      );
+
+      const remaining = Math.max(currentPlayer.timerLeft - elapsedSeconds, 0);
+
+      setCurrentTimeLeft(remaining);
+      if (remaining === 0 && currentPlayer.name === me?.name) {
+        socket.emit("timer-expired", game.room.roomCode);
+      }
+    };
+
+    updateTimer();
+
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [game, game?.currentTurn]);
 
   if (!game) {
     return (
@@ -163,6 +204,13 @@ export default function GamePage() {
     game.currentTurn === me?.name &&
     !me?.solved &&
     me?.answerLeft > 0;
+
+  const minutes = Math.floor(currentTimeLeft / 60);
+  const seconds = currentTimeLeft % 60;
+
+  const formattedTime = `${minutes
+    .toString()
+    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 
   return (
     <>
@@ -315,6 +363,15 @@ export default function GamePage() {
               <p className="mt-2 text-lg font-bold text-orange-400 lg:text-xl">
                 Current Turn : {game.currentTurn}
               </p>
+              <div className="mt-3 text-center">
+                <p className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                  Time Remaining
+                </p>
+
+                <p className="mt-1 text-3xl font-extrabold text-orange-400">
+                  {formattedTime}
+                </p>
+              </div>
             </div>
 
             {/* Info Match */}

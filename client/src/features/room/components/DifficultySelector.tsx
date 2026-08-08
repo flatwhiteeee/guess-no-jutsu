@@ -3,7 +3,7 @@ interface DifficultySelectorProps {
   onChange: (difficulty: string) => void;
 }
 
-const difficulties = ["Easy", "Medium", "Hard", "Impossible"];
+const difficulties = ["Easy", "Medium", "Hard"];
 
 export default function DifficultySelector({
   value,

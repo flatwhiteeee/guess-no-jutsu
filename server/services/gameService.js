@@ -12,8 +12,19 @@ function shuffle(array) {
   return result;
 }
 
-function assignCharacters(players) {
-  const randomCharacters = shuffle(characters);
+function assignCharacters(players, difficulty) {
+  const difficultyData = characters[difficulty.toLowerCase()];
+
+  if (!difficultyData) {
+    console.error("Invalid difficulty:", difficulty);
+    return;
+  }
+
+  const questionPool = difficultyData.categories.flatMap(
+    (category) => difficultyData[category] || [],
+  );
+
+  const randomCharacters = shuffle(questionPool);
 
   players.forEach((player, index) => {
     player.character = randomCharacters[index].name;
@@ -24,6 +35,39 @@ function createTurnOrder(players) {
   const shuffled = shuffle(players);
 
   return shuffled.map((player) => player.id);
+}
+
+function startTurnTimer(room) {
+  const currentId = room.turnOrder[room.turnIndex];
+
+  const player = room.players.find((p) => p.id === currentId);
+
+  if (!player) return;
+
+  player.timerStartedAt = Date.now();
+}
+
+function getPlayerTimeLeft(player) {
+  if (!player.timerStartedAt) {
+    return player.timerLeft;
+  }
+
+  const elapsedSeconds = Math.floor(
+    (Date.now() - player.timerStartedAt) / 1000,
+  );
+
+  return Math.max(player.timerLeft - elapsedSeconds, 0);
+}
+
+function stopTurnTimer(room) {
+  const currentId = room.turnOrder[room.turnIndex];
+
+  const player = room.players.find((p) => p.id === currentId);
+
+  if (!player) return;
+
+  player.timerLeft = getPlayerTimeLeft(player);
+  player.timerStartedAt = null;
 }
 
 function refreshTurnOrder(room) {
@@ -86,6 +130,9 @@ function useQuestion(room) {
 module.exports = {
   assignCharacters,
   createTurnOrder,
+  startTurnTimer,
+  getPlayerTimeLeft,
+  stopTurnTimer,
   refreshTurnOrder,
   getCurrentTurn,
   nextTurn,

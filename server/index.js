@@ -21,6 +21,9 @@ app.use(
 const server = http.createServer(app);
 
 const io = new Server(server, {
+  pingInterval: 2000,
+  pingTimeout: 2000,
+
   cors: {
     origin: [
       "http://localhost:5173",

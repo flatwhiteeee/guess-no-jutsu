@@ -18,6 +18,9 @@ const {
 const {
   assignCharacters,
   createTurnOrder,
+  startTurnTimer,
+  getPlayerTimeLeft,
+  stopTurnTimer,
   refreshTurnOrder,
   getCurrentTurn,
   nextTurn,
@@ -168,11 +171,13 @@ function registerRoomHandlers(io, socket) {
 
     const room = startGame(roomCode);
 
-    assignCharacters(room.players);
+    assignCharacters(room.players, room.difficulty);
 
     room.turnOrder = createTurnOrder(room.players);
 
     const currentTurn = getCurrentTurn(room);
+
+    startTurnTimer(room);
 
     io.to(roomCode).emit("game-state", {
       room,
@@ -187,11 +192,13 @@ function registerRoomHandlers(io, socket) {
 
     if (!room) return;
 
-    assignCharacters(room.players);
+    assignCharacters(room.players, room.difficulty);
 
     room.turnOrder = createTurnOrder(room.players);
 
     const currentTurn = getCurrentTurn(room);
+
+    startTurnTimer(room);
     io.to(roomCode).emit("play-again");
     io.to(roomCode).emit("game-state", {
       room,
@@ -209,6 +216,11 @@ function registerRoomHandlers(io, socket) {
     if (room.turnIndex >= room.turnOrder.length - 1) {
       return;
     }
+
+    // =========================
+    // STOP TIMER PLAYER SAAT INI
+    // =========================
+    stopTurnTimer(room);
 
     // Player yang baru selesai memakai 1 question
     useQuestion(room);
@@ -232,6 +244,78 @@ function registerRoomHandlers(io, socket) {
 
     if (room.turnOrder.length > 0) {
       currentTurn = nextTurn(room);
+
+      // =========================
+      // START TIMER PLAYER BERIKUTNYA
+      // =========================
+      startTurnTimer(room);
+    }
+
+    io.to(roomCode).emit("game-state", {
+      room,
+      currentTurn,
+    });
+  });
+
+  // =========================
+  // TIMER EXPIRED
+  // =========================
+  socket.on("timer-expired", (roomCode) => {
+    const room = getRoomData(roomCode);
+
+    if (!room) return;
+
+    // Pastikan memang masih ada turn
+    if (room.turnOrder.length === 0) return;
+
+    const currentPlayerId = room.turnOrder[room.turnIndex];
+
+    // Hanya current player yang boleh menghabiskan waktu
+    if (currentPlayerId !== socket.id) return;
+
+    const player = room.players.find((p) => p.id === socket.id);
+
+    if (!player) return;
+
+    // Pastikan timer benar-benar sudah habis
+    const timeLeft = getPlayerTimeLeft(player);
+
+    if (timeLeft > 0) return;
+
+    // Simpan timer sebagai 0 dan hentikan timer
+    stopTurnTimer(room);
+
+    player.timerLeft = 0;
+    player.failed = true;
+
+    // Keluarkan player dari turn order
+    refreshTurnOrder(room);
+
+    // Beritahu semua player bahwa player ini kehabisan waktu
+    io.to(socket.id).emit("time-expired", {
+      playerName: player.name,
+    });
+
+    // Cek apakah game selesai
+    if (isGameFinished(roomCode)) {
+      const winners = room.players.filter((p) => p.solved);
+      const losers = room.players.filter((p) => p.failed);
+
+      io.to(roomCode).emit("game-finished", {
+        room,
+        winners,
+        losers,
+      });
+
+      return;
+    }
+
+    let currentTurn = "";
+
+    if (room.turnOrder.length > 0) {
+      currentTurn = getCurrentTurn(room);
+
+      startTurnTimer(room);
     }
 
     io.to(roomCode).emit("game-state", {
@@ -246,6 +330,11 @@ function registerRoomHandlers(io, socket) {
     const room = getRoomData(roomCode);
 
     if (!room) return;
+
+    // =========================
+    // STOP TIMER PLAYER TERAKHIR
+    // =========================
+    stopTurnTimer(room);
 
     // Player terakhir dalam ronde juga menghabiskan 1 question
     useQuestion(room);
@@ -291,6 +380,12 @@ function registerRoomHandlers(io, socket) {
 
     if (room.turnOrder.length > 0) {
       currentTurn = getCurrentTurn(room);
+
+      // =========================
+      // START TIMER PLAYER
+      // DI ROUND BARU
+      // =========================
+      startTurnTimer(room);
     }
 
     io.to(roomCode).emit("game-state", {
@@ -312,7 +407,18 @@ function registerRoomHandlers(io, socket) {
       return;
     }
 
+    // =========================
+    // PAUSE TIMER JIKA PLAYER
+    // DISCONNECT SAAT GILIRAN
+    // =========================
+    const currentPlayerId = room.turnOrder[room.turnIndex];
+
+    if (room.status === "playing" && currentPlayerId === socket.id) {
+      stopTurnTimer(room);
+    }
+
     io.to(room.roomCode).emit("players-updated", room.players);
+
     const currentTurn = room.turnOrder.length > 0 ? getCurrentTurn(room) : "";
 
     io.to(room.roomCode).emit("game-state", {
@@ -332,6 +438,13 @@ function registerRoomHandlers(io, socket) {
     if (!reconnectSocket) return;
 
     reconnectSocket.join(result.room.roomCode);
+
+    if (
+      result.room.status === "playing" &&
+      result.room.turnOrder[result.room.turnIndex] === socketId
+    ) {
+      startTurnTimer(result.room);
+    }
 
     const currentTurn = getCurrentTurn(result.room);
 
@@ -399,8 +512,13 @@ function registerRoomHandlers(io, socket) {
     result.player.answeredThisRound = true;
 
     // Langsung keluarkan dari turn jika sudah selesai bermain
+    // Langsung keluarkan dari turn jika sudah selesai bermain
     if (result.player.solved || result.player.failed) {
       refreshTurnOrder(result.room);
+
+      if (result.room.turnOrder.length > 0) {
+        startTurnTimer(result.room);
+      }
     }
 
     const currentTurn =
