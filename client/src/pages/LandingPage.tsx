@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import Logo from "../components/ui/Logo";
 import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
 import GameNotification from "../components/ui/GameNotification";
+
+import desktopBackground from "../assets/landing-forest-desktop.png";
+import mobileBackground from "../assets/landing-forest-mobile.png";
+import titleArtwork from "../assets/landing-title.png";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -65,28 +66,66 @@ export default function LandingPage() {
       />
 
       <div className="relative min-h-screen overflow-hidden bg-slate-950">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-orange-500/20 blur-3xl"></div>
+        <picture className="absolute inset-0">
+          <source media="(max-width: 767px)" srcSet={mobileBackground} />
 
-          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl"></div>
+          <img
+            src={desktopBackground}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </picture>
 
-          <div className="absolute top-0 right-0 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl"></div>
-        </div>
+        <div className="absolute inset-0 z-10 bg-slate-950/40" />
 
-        <div className="relative flex min-h-screen items-center justify-center px-6">
-          <Card className="w-full max-w-sm space-y-8">
-            <Logo />
-
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Masukkan Nama"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                className="w-full rounded-xl bg-slate-800 p-3 text-white"
+        <div className="relative z-20 flex min-h-screen items-center justify-center px-6">
+          <div className="flex w-full max-w-md flex-col items-center md:max-w-xl">
+            <div className="relative w-full">
+              <img
+                src={titleArtwork}
+                alt="Guess No Jutsu"
+                className="w-full max-w-[600px] md:max-w-[760px]"
               />
 
+              <p className="text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70 sm:text-xs">
+                <span className="inline-flex items-center gap-3">
+                  <span className="h-px w-6 bg-[#d4c7a6]/50" />
+                  <span>The Shinobi Is Hidden</span>
+                  <span className="h-px w-6 bg-[#d4c7a6]/50" />
+                </span>
+              </p>
+            </div>
+
+            <div className="mt-5 w-full max-w-sm space-y-3 md:max-w-sm">
+              <div className="space-y-2">
+                <label
+                  htmlFor="player-name"
+                  className="block text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70 sm:text-xs"
+                >
+                  Your Shinobi Name
+                </label>
+
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-0 border border-[#d4c7a6]/30" />
+
+                  <div className="pointer-events-none absolute -left-px -top-px h-2 w-2 border-l border-t border-[#d4c7a6]/80" />
+                  <div className="pointer-events-none absolute -right-px -top-px h-2 w-2 border-r border-t border-[#d4c7a6]/80" />
+                  <div className="pointer-events-none absolute -bottom-px -left-px h-2 w-2 border-b border-l border-[#d4c7a6]/80" />
+                  <div className="pointer-events-none absolute -bottom-px -right-px h-2 w-2 border-b border-r border-[#d4c7a6]/80" />
+
+                  <input
+                    id="player-name"
+                    type="text"
+                    placeholder="Enter your name..."
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    className="h-12 w-full bg-slate-950/60 px-4 text-center text-sm text-white outline-none backdrop-blur-sm transition-all placeholder:text-white/35 focus:shadow-[0_0_18px_rgba(212,199,166,0.12)]"
+                  />
+                </div>
+              </div>
+
               <Button
+                className="!rounded-md !border !border-[#E6D9B8]/70 !bg-[#D4C7A6] !py-3.5 !text-[#172014] uppercase tracking-[0.12em] !shadow-[0_0_12px_rgba(212,199,166,0.10)] transition-all duration-200 hover:!bg-[#E0D4B5] hover:!shadow-[0_0_18px_rgba(212,199,166,0.18)] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.98]"
                 onClick={() => {
                   if (!saveName()) return;
 
@@ -98,6 +137,7 @@ export default function LandingPage() {
 
               <Button
                 variant="secondary"
+                className="!border-0 !bg-transparent !py-2 !text-white/65 uppercase tracking-[0.18em] !shadow-none transition-all duration-200 hover:!bg-transparent hover:!text-[#D4C7A6] hover:-translate-y-[1px] active:translate-y-0"
                 onClick={() => {
                   if (!saveName()) return;
 
@@ -107,7 +147,7 @@ export default function LandingPage() {
                 Join Room
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </>
