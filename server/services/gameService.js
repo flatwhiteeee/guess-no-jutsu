@@ -44,6 +44,8 @@ function startTurnTimer(room) {
 
   if (!player) return;
 
+  if (!player.connected) return;
+
   player.timerStartedAt = Date.now();
 }
 
