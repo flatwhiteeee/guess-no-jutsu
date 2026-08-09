@@ -482,7 +482,6 @@ export default function GamePage() {
                 key={player.id}
                 player={player}
                 isMe={player.sessionId === mySessionId}
-                gameFinished={gameFinished}
                 isCurrentTurn={player.name === game.currentTurn}
                 currentTimeLeft={currentTimeLeft}
               />

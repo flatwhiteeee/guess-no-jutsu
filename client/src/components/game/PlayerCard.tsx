@@ -1,7 +1,6 @@
 interface PlayerCardProps {
   player: any;
   isMe: boolean;
-  gameFinished: boolean;
   isCurrentTurn: boolean;
   currentTimeLeft: number;
 }
@@ -9,7 +8,6 @@ interface PlayerCardProps {
 export default function PlayerCard({
   player,
   isMe,
-  gameFinished,
   isCurrentTurn,
   currentTimeLeft,
 }: PlayerCardProps) {
