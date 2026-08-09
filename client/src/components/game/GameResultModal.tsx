@@ -1,6 +1,7 @@
 interface Player {
   id: string;
   name: string;
+  character: string;
 }
 
 interface Props {
@@ -71,7 +72,9 @@ export default function GameResultModal({
                       key={player.id}
                       className="rounded-xl border border-red-500/30 bg-red-500/10 py-3"
                     >
-                      <p className="text-center">{player.name}</p>
+                      <p className="text-center">
+                        {player.name} — {player.character}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -94,7 +97,9 @@ export default function GameResultModal({
                   key={player.id}
                   className="rounded-xl border border-red-500/30 bg-red-500/10 py-3"
                 >
-                  <p className="text-center">{player.name}</p>
+                  <p className="text-center">
+                    {player.name} — {player.character}
+                  </p>
                 </div>
               ))}
             </div>

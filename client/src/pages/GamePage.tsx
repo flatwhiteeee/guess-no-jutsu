@@ -10,6 +10,7 @@ import GameNotes from "../components/game/GameNotes";
 export default function GamePage() {
   const { state } = useLocation();
   const [answer, setAnswer] = useState("");
+  const [notesResetKey, setNotesResetKey] = useState(0);
   const [currentTimeLeft, setCurrentTimeLeft] = useState(0);
   const [game, setGame] = useState<any>(state?.game);
   const [showRoomCode, setShowRoomCode] = useState(false);
@@ -72,15 +73,12 @@ export default function GamePage() {
       setLosers([]);
 
       setAnswer("");
+      setNotesResetKey((prev) => prev + 1);
 
       setGame((prev: any) => ({
         ...prev,
         currentTurn: "",
       }));
-    });
-
-    socket.on("game-state", (data: any) => {
-      setGame(data);
     });
 
     socket.on("game-state", (data: any) => {
@@ -485,6 +483,8 @@ export default function GamePage() {
                 player={player}
                 isMe={player.sessionId === mySessionId}
                 gameFinished={gameFinished}
+                isCurrentTurn={player.name === game.currentTurn}
+                currentTimeLeft={currentTimeLeft}
               />
             ))}
           </div>
@@ -543,7 +543,7 @@ export default function GamePage() {
             </div>
           )}
         </div>
-        <GameNotes />
+        <GameNotes resetKey={notesResetKey} />
       </div>
       {reconnectRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">

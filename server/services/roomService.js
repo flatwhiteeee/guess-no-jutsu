@@ -35,7 +35,7 @@ function createRoom(hostSocketId, settings) {
 
         answerLeft: 3,
 
-        timerLeft: 10 * 60,
+        timerLeft: 6 * 60,
         timerStartedAt: null,
 
         solved: false,
@@ -117,7 +117,7 @@ function joinRoom(roomCode, socketId, playerName, sessionId = null) {
     questionLeft: 10,
 
     answerLeft: 3,
-    timerLeft: 10 * 60,
+    timerLeft: 6 * 60,
     timerStartedAt: null,
 
     solved: false,
@@ -338,7 +338,7 @@ function resetGame(roomCode) {
     player.questionLeft = 10;
     player.answerLeft = 3;
 
-    player.timerLeft = 10 * 60;
+    player.timerLeft = 6 * 60;
     player.timerStartedAt = null;
 
     player.solved = false;
@@ -427,6 +427,7 @@ module.exports = {
   getPlayers,
   getRoomData,
   isHost,
+  updateRoomSettings,
   toggleReady,
   leaveRoom,
   disconnectPlayer,

@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function GameNotes() {
+export default function GameNotes({ resetKey }: { resetKey: number }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
+  useEffect(() => {
+    setNotes("");
+  }, [resetKey]);
 
   return (
     <>
