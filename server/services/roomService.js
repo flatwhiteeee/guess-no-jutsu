@@ -155,9 +155,9 @@ function updateRoomSettings(roomCode, settings) {
 
   if (!room) return null;
 
-  room.category = settings.category;
-  room.difficulty = settings.difficulty;
-  room.maxPlayers = settings.maxPlayers;
+  room.category = settings.category || room.category;
+  room.difficulty = settings.difficulty || room.difficulty;
+  room.maxPlayers = settings.maxPlayers || room.maxPlayers;
 
   return room;
 }

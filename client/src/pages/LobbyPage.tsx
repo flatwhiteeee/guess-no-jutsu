@@ -4,6 +4,7 @@ import { socket } from "../lib/socket";
 import Button from "../components/ui/Button";
 import generateRoomCode from "../utils/generateRoomCode";
 import GameNotification from "../components/ui/GameNotification";
+import CategorySelector from "../features/room/components/CategorySelector";
 
 interface Player {
   id: string;
@@ -21,6 +22,7 @@ export default function LobbyPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [editDifficulty, setEditDifficulty] = useState("");
   const [editMaxPlayers, setEditMaxPlayers] = useState(2);
+  const [editCategory, setEditCategory] = useState("");
   const isHost = roomData?.host === socket.id;
   const [notification, setNotification] = useState({
     open: false,
@@ -154,6 +156,7 @@ export default function LobbyPage() {
                     setEditDifficulty(roomData?.difficulty || "");
                     setEditMaxPlayers(roomData?.maxPlayers || 2);
                     setShowSettings(true);
+                    setEditCategory(roomData?.category || "");
                   }}
                   title="Room Settings"
                   aria-label="Room Settings"
@@ -246,6 +249,12 @@ export default function LobbyPage() {
 
             <div className="mt-6 space-y-5">
               <div>
+                <CategorySelector
+                  value={editCategory}
+                  onChange={setEditCategory}
+                />
+              </div>
+              <div>
                 <p className="mb-3 font-semibold text-slate-300">Difficulty</p>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -308,6 +317,7 @@ export default function LobbyPage() {
                 onClick={() => {
                   socket.emit("update-room-settings", {
                     roomCode,
+                    category: editCategory,
                     difficulty: editDifficulty,
                     maxPlayers: editMaxPlayers,
                   });
