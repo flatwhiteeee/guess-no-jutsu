@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { socket } from "../lib/socket";
 import PlayerCard from "../components/game/PlayerCard";
@@ -17,6 +17,7 @@ export default function GamePage() {
   const [gameFinished, setGameFinished] = useState(false);
   const [winners, setWinners] = useState<any[]>([]);
   const [losers, setLosers] = useState<any[]>([]);
+  const wasDisconnected = useRef(false);
   const navigate = useNavigate();
   const [notification, setNotification] = useState({
     open: false,
@@ -79,39 +80,50 @@ export default function GamePage() {
     });
 
     socket.on("game-state", (data: any) => {
-      console.log("=== GAME STATE RECEIVED ===");
-      console.log("SOCKET ID:", socket.id);
-
-      console.log(
-        "PLAYERS:",
-        data.room.players.map((player: any) => ({
-          name: player.name,
-          id: player.id,
-          connected: player.connected,
-          solved: player.solved,
-          failed: player.failed,
-        })),
-      );
-
       setGame(data);
     });
 
+    socket.on("game-state", (data: any) => {
+      setGame(data);
+    });
+
+    socket.on("disconnect", () => {
+      wasDisconnected.current = true;
+    });
+
     socket.on("connect", () => {
-      console.log("🟢 SOCKET CONNECTED:", socket.id);
+      if (!wasDisconnected.current) {
+        return;
+      }
+
+      wasDisconnected.current = false;
+
+      const savedSession = localStorage.getItem("guess-no-jutsu-session");
+
+      if (!savedSession) {
+        return;
+      }
+
+      try {
+        const session = JSON.parse(savedSession);
+
+        if (session.roomCode !== game.room.roomCode) {
+          return;
+        }
+
+        const playerName = localStorage.getItem("playerName") || "Player";
+        socket.emit("join-room", {
+          roomCode: session.roomCode,
+          playerName,
+          sessionId: session.sessionId,
+        });
+      } catch {}
     });
 
-    socket.on("disconnect", (reason) => {
-      console.log("🔴 SOCKET DISCONNECTED:", reason);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.log("⚠️ SOCKET CONNECT ERROR:", error.message);
-    });
     socket.on("reconnect-request", (data) => {
-      console.log("HOST MENERIMA RECONNECT REQUEST", data);
-
       setReconnectRequest(data);
     });
+
     socket.on("room-closed", () => {
       showNotification("ROOM DITUTUP", "Host telah menutup room.", "red");
 
@@ -166,6 +178,8 @@ export default function GamePage() {
       socket.off("play-again");
       socket.off("room-closed");
       socket.off("reconnect-request");
+      socket.off("connect");
+      socket.off("disconnect");
     };
   }, []);
 
@@ -227,17 +241,6 @@ export default function GamePage() {
   }
 
   const me = game.room.players.find((p: any) => p.sessionId === mySessionId);
-  console.log("MY SOCKET :", myId);
-
-  console.log(
-    "PLAYER IDS :",
-    game.room.players.map((p: any) => ({
-      name: p.name,
-      id: p.id,
-    })),
-  );
-
-  console.log("ME :", me);
 
   const canAnswer =
     game.room.currentRound > 1 &&
