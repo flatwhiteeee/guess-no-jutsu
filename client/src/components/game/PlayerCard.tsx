@@ -28,7 +28,11 @@ export default function PlayerCard({
       <p>
         Character :
         <span className="ml-2 font-bold text-orange-400">
-          {player.solved || player.failed ? player.character : "??????"}
+          {isMe
+            ? player.solved || player.failed
+              ? player.character
+              : "??????"
+            : player.character}
         </span>
       </p>
 

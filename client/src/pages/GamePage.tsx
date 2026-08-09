@@ -79,7 +79,33 @@ export default function GamePage() {
     });
 
     socket.on("game-state", (data: any) => {
+      console.log("=== GAME STATE RECEIVED ===");
+      console.log("SOCKET ID:", socket.id);
+
+      console.log(
+        "PLAYERS:",
+        data.room.players.map((player: any) => ({
+          name: player.name,
+          id: player.id,
+          connected: player.connected,
+          solved: player.solved,
+          failed: player.failed,
+        })),
+      );
+
       setGame(data);
+    });
+
+    socket.on("connect", () => {
+      console.log("🟢 SOCKET CONNECTED:", socket.id);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("🔴 SOCKET DISCONNECTED:", reason);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.log("⚠️ SOCKET CONNECT ERROR:", error.message);
     });
     socket.on("reconnect-request", (data) => {
       console.log("HOST MENERIMA RECONNECT REQUEST", data);
@@ -186,7 +212,21 @@ export default function GamePage() {
   const myId = socket.id;
   const isHost = game.room.host === myId;
 
-  const me = game.room.players.find((p: any) => p.id === myId);
+  const savedSession = localStorage.getItem("guess-no-jutsu-session");
+
+  let mySessionId: string | null = null;
+
+  if (savedSession) {
+    try {
+      const session = JSON.parse(savedSession);
+
+      if (session.roomCode === game.room.roomCode) {
+        mySessionId = session.sessionId;
+      }
+    } catch {}
+  }
+
+  const me = game.room.players.find((p: any) => p.sessionId === mySessionId);
   console.log("MY SOCKET :", myId);
 
   console.log(
@@ -440,7 +480,7 @@ export default function GamePage() {
               <PlayerCard
                 key={player.id}
                 player={player}
-                isMe={player.id === myId}
+                isMe={player.sessionId === mySessionId}
                 gameFinished={gameFinished}
               />
             ))}
