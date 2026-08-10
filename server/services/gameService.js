@@ -73,12 +73,13 @@ function stopTurnTimer(room) {
 }
 
 function refreshTurnOrder(room) {
+  const currentId = room.turnOrder[room.turnIndex];
+
   room.turnOrder = room.turnOrder.filter((playerId) => {
     const player = room.players.find((p) => p.id === playerId);
 
     if (!player) return false;
 
-    // Sudah berhasil menebak
     if (player.solved) return false;
 
     if (player.failed) return false;
@@ -86,11 +87,19 @@ function refreshTurnOrder(room) {
     return true;
   });
 
-  if (room.turnIndex >= room.turnOrder.length) {
-    room.turnIndex = room.turnOrder.length - 1;
+  if (room.turnOrder.length === 0) {
+    room.turnIndex = 0;
+    return;
   }
 
-  if (room.turnIndex < 0) {
+  const currentIndex = room.turnOrder.indexOf(currentId);
+
+  if (currentIndex !== -1) {
+    room.turnIndex = currentIndex;
+    return;
+  }
+
+  if (room.turnIndex >= room.turnOrder.length) {
     room.turnIndex = 0;
   }
 }
