@@ -87,24 +87,17 @@ export default function LandingPage() {
                 className="w-full max-w-[600px] md:max-w-[760px]"
               />
 
-              <p className="text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70 sm:text-xs">
-                <span className="inline-flex items-center gap-3">
-                  <span className="h-px w-6 bg-[#d4c7a6]/50" />
+              <p className="text-center text-[12px] md:text-lg font-semibold uppercase tracking-[0.3em] md:tracking-[0.4em] text-white/70">
+                <span className="inline-flex items-center gap-3 md:gap-6">
+                  <span className="h-px w-13 md:w-20 bg-[#d4c7a6]/50" />
                   <span>The Shinobi Is Hidden</span>
-                  <span className="h-px w-6 bg-[#d4c7a6]/50" />
+                  <span className="h-px w-13 md:w-20 bg-[#d4c7a6]/50" />
                 </span>
               </p>
             </div>
 
             <div className="mt-5 w-full max-w-sm space-y-3 md:max-w-sm">
               <div className="space-y-2">
-                <label
-                  htmlFor="player-name"
-                  className="block text-center text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70 sm:text-xs"
-                >
-                  Your Shinobi Name
-                </label>
-
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-0 border border-[#d4c7a6]/30" />
 
@@ -116,7 +109,7 @@ export default function LandingPage() {
                   <input
                     id="player-name"
                     type="text"
-                    placeholder="Enter your name..."
+                    placeholder="Your Shinobi Name . ."
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
                     className="h-12 w-full bg-slate-950/60 px-4 text-center text-sm text-white outline-none backdrop-blur-sm transition-all placeholder:text-white/35 focus:shadow-[0_0_18px_rgba(212,199,166,0.12)]"
