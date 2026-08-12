@@ -44,6 +44,7 @@ function createRoom(hostSocketId, settings) {
         answeredThisRound: false,
 
         connected: true,
+        leftGame: false,
       },
     ],
   };
@@ -126,6 +127,7 @@ function joinRoom(roomCode, socketId, playerName, sessionId = null) {
     answeredThisRound: false,
 
     connected: true,
+    leftGame: false,
   });
   console.log(
     room.players.map((p) => ({
@@ -318,6 +320,7 @@ function startGame(roomCode) {
     player.failed = false;
     player.solved = false;
     player.answeredThisRound = false;
+    player.leftGame = false;
   });
 
   return room;
@@ -345,6 +348,73 @@ function resetGame(roomCode) {
     player.failed = false;
     player.answeredThisRound = false;
   });
+
+  return room;
+}
+function returnToLobby(roomCode) {
+  const room = rooms[roomCode];
+
+  if (!room) return null;
+
+  const wasPlaying = room.status === "playing";
+
+  room.status = "lobby";
+  room.currentRound = 0;
+  room.turnIndex = 0;
+  room.turnOrder = [];
+
+  room.players.forEach((player) => {
+    if (wasPlaying) {
+      player.ready = false;
+    }
+
+    player.character = null;
+
+    player.questionLeft = 10;
+    player.answerLeft = 3;
+
+    player.timerLeft = 6 * 60;
+    player.timerStartedAt = null;
+
+    player.solved = false;
+    player.failed = false;
+    player.answeredThisRound = false;
+  });
+
+  return room;
+}
+function leaveGame(roomCode, socketId) {
+  const room = rooms[roomCode];
+
+  if (!room) return null;
+
+  const player = room.players.find((p) => p.id === socketId);
+
+  if (!player) return null;
+
+  const leavingPlayerIndex = room.turnOrder.indexOf(socketId);
+  const wasCurrentTurn = leavingPlayerIndex === room.turnIndex;
+
+  player.leftGame = true;
+  player.connected = true;
+  player.ready = false;
+
+  room.turnOrder = room.turnOrder.filter((playerId) => playerId !== socketId);
+
+  if (room.turnOrder.length === 0) {
+    room.turnIndex = 0;
+  } else if (wasCurrentTurn) {
+    // Player yang sedang mendapat giliran keluar.
+    // Tetap gunakan index yang sama karena player berikutnya
+    // otomatis bergeser ke posisi tersebut.
+    if (room.turnIndex >= room.turnOrder.length) {
+      room.turnIndex = 0;
+    }
+  } else if (leavingPlayerIndex < room.turnIndex) {
+    // Player sebelum current turn dihapus,
+    // sehingga index current turn harus mundur satu.
+    room.turnIndex -= 1;
+  }
 
   return room;
 }
@@ -415,7 +485,7 @@ function isGameFinished(roomCode) {
   if (!room) return false;
 
   const activePlayers = room.players.filter(
-    (player) => !player.solved && !player.failed,
+    (player) => !player.solved && !player.failed && !player.leftGame,
   );
 
   return activePlayers.length === 0;
@@ -430,11 +500,13 @@ module.exports = {
   updateRoomSettings,
   toggleReady,
   leaveRoom,
+  leaveGame,
   disconnectPlayer,
   approveReconnect,
   canStartGame,
   startGame,
   resetGame,
+  returnToLobby,
   useAnswer,
   checkAnswer,
   isGameFinished,

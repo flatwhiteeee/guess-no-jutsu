@@ -32,12 +32,18 @@ export default function PlayerCard({
 
         <span
           className={`rounded-full px-3 py-1 text-xs font-bold ${
-            player.connected
-              ? "bg-green-500/20 text-green-400"
-              : "bg-red-500/20 text-red-400"
+            player.leftGame
+              ? "bg-slate-500/20 text-slate-300"
+              : player.connected
+                ? "bg-green-500/20 text-green-400"
+                : "bg-red-500/20 text-red-400"
           }`}
         >
-          {player.connected ? "🟢 Online" : "🔴 Offline"}
+          {player.leftGame
+            ? "⚪ Keluar Game"
+            : player.connected
+              ? "🟢 Online"
+              : "🔴 Offline"}
         </span>
       </div>
 

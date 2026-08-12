@@ -1,11 +1,90 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function GameNotes({ resetKey }: { resetKey: number }) {
+export default function GameNotes({
+  resetKey,
+  currentTurn,
+  players,
+}: {
+  resetKey: number;
+  currentTurn: string;
+  players: any[];
+}) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
+  const previousPlayers = useRef<any[] | null>(null);
+
+  const [turnIndicator, setTurnIndicator] = useState<{
+    type: "turn" | "solved" | "failed";
+    playerName: string;
+  }>({
+    type: "turn",
+    playerName: currentTurn,
+  });
   useEffect(() => {
     setNotes("");
   }, [resetKey]);
+  useEffect(() => {
+    if (!players) return;
+
+    // Pertama kali menerima data, hanya simpan snapshot.
+    // Jangan anggap player yang sudah solved/failed sebagai kejadian baru.
+    if (previousPlayers.current === null) {
+      previousPlayers.current = players;
+      setTurnIndicator({
+        type: "turn",
+        playerName: currentTurn,
+      });
+      return;
+    }
+
+    const previous = previousPlayers.current;
+
+    const changedPlayer = players.find((player: any) => {
+      const oldPlayer = previous.find((p: any) => p.id === player.id);
+
+      if (!oldPlayer) return false;
+
+      return (
+        (!oldPlayer.solved && player.solved) ||
+        (!oldPlayer.failed && player.failed)
+      );
+    });
+
+    if (changedPlayer) {
+      if (changedPlayer.solved) {
+        setTurnIndicator({
+          type: "solved",
+          playerName: changedPlayer.name,
+        });
+      } else if (changedPlayer.failed) {
+        setTurnIndicator({
+          type: "failed",
+          playerName: changedPlayer.name,
+        });
+      }
+
+      // Setelah status selesai ditampilkan sebentar,
+      // kembali ke player yang sedang mendapat giliran.
+      const timer = setTimeout(() => {
+        setTurnIndicator({
+          type: "turn",
+          playerName: currentTurn,
+        });
+      }, 1500);
+
+      previousPlayers.current = players;
+
+      return () => clearTimeout(timer);
+    }
+
+    // Tidak ada solved/failed baru → langsung tampilkan current turn.
+    setTurnIndicator({
+      type: "turn",
+      playerName: currentTurn,
+    });
+
+    previousPlayers.current = players;
+  }, [players, currentTurn]);
 
   return (
     <>
@@ -44,6 +123,31 @@ export default function GameNotes({ resetKey }: { resetKey: number }) {
               <p className="mt-1 text-sm text-slate-400">
                 Catat petunjuk karakter selama permainan.
               </p>
+              <div
+                className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
+                  turnIndicator.type === "solved"
+                    ? "bg-green-500/10 text-green-400"
+                    : turnIndicator.type === "failed"
+                      ? "bg-red-500/10 text-red-400"
+                      : "bg-orange-500/10 text-orange-400"
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    turnIndicator.type === "solved"
+                      ? "bg-green-400"
+                      : turnIndicator.type === "failed"
+                        ? "bg-red-400"
+                        : "bg-orange-400"
+                  }`}
+                />
+
+                {turnIndicator.type === "solved"
+                  ? `${turnIndicator.playerName} SOLVED`
+                  : turnIndicator.type === "failed"
+                    ? `${turnIndicator.playerName} GUGUR`
+                    : `Giliran: ${turnIndicator.playerName || "-"}`}
+              </div>
             </div>
 
             <button

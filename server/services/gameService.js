@@ -32,7 +32,11 @@ function assignCharacters(players, difficulty) {
 }
 
 function createTurnOrder(players) {
-  const shuffled = shuffle(players);
+  const activePlayers = players.filter(
+    (player) => !player.leftGame && player.connected,
+  );
+
+  const shuffled = shuffle(activePlayers);
 
   return shuffled.map((player) => player.id);
 }

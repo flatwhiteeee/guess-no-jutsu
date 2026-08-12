@@ -48,6 +48,14 @@ export default function LobbyPage() {
 
   useEffect(() => {
     socket.on("game-state", (game) => {
+      const me = game.room?.players?.find(
+        (player: any) => player.id === socket.id,
+      );
+
+      if (me?.leftGame) {
+        return;
+      }
+
       navigate("/game", {
         state: {
           game,
@@ -72,6 +80,7 @@ export default function LobbyPage() {
         showNotification("TIDAK BISA MEMULAI", message, "red");
       }
     });
+
     socket.emit("get-room-data", roomCode);
     socket.emit("get-players", roomCode);
 
@@ -82,6 +91,7 @@ export default function LobbyPage() {
     socket.on("players-updated", (players: Player[]) => {
       setPlayers(players);
     });
+
     socket.on("room-closed", () => {
       showNotification("ROOM DITUTUP", "Host telah menutup room.", "red");
 

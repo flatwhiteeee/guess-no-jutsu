@@ -4,12 +4,14 @@ const {
   getPlayers,
   getRoomData,
   leaveRoom,
+  leaveGame,
   disconnectPlayer,
   approveReconnect,
   toggleReady,
   canStartGame,
   startGame,
   resetGame,
+  returnToLobby,
   useAnswer,
   checkAnswer,
   isGameFinished,
@@ -200,18 +202,6 @@ function registerRoomHandlers(io, socket) {
 
     io.to(room.roomCode).emit("players-updated", room.players);
 
-    if (room.status === "playing") {
-      const winners = room.players.filter((p) => p.solved);
-
-      const losers = room.players.filter((p) => p.failed);
-
-      io.to(room.roomCode).emit("game-finished", {
-        room,
-        winners,
-        losers,
-      });
-    }
-
     console.log("Player Left Lobby:", socket.id);
   });
 
@@ -261,6 +251,67 @@ function registerRoomHandlers(io, socket) {
       room,
       currentTurn,
     });
+  });
+  // =========================
+  // RETURN TO LOBBY
+  // =========================
+  socket.on("return-to-lobby", (roomCode) => {
+    const room = getRoomData(roomCode);
+
+    if (!room) return;
+
+    const updatedRoom = returnToLobby(roomCode);
+
+    if (!updatedRoom) return;
+
+    io.to(roomCode).emit("room-data", updatedRoom);
+    io.to(roomCode).emit("players-updated", updatedRoom.players);
+    socket.emit("returned-to-lobby");
+  });
+  // =========================
+  // LEAVE GAME
+  // =========================
+  socket.on("leave-game", (roomCode) => {
+    const room = getRoomData(roomCode);
+
+    if (!room) return;
+
+    // Jika player yang keluar sedang mendapat giliran,
+    // hentikan timer-nya terlebih dahulu.
+    const currentPlayerId = room.turnOrder[room.turnIndex];
+
+    if (currentPlayerId === socket.id) {
+      stopTurnTimer(room);
+    }
+
+    const updatedRoom = leaveGame(roomCode, socket.id);
+
+    if (!updatedRoom) return;
+
+    // Cek apakah setelah player keluar,
+    // sudah tidak ada player aktif yang tersisa.
+    if (isGameFinished(roomCode)) {
+      const winners = updatedRoom.players.filter((p) => p.solved);
+      const losers = updatedRoom.players.filter((p) => p.failed);
+
+      io.to(roomCode).emit("game-finished", {
+        room: updatedRoom,
+        winners,
+        losers,
+      });
+
+      socket.emit("returned-to-lobby");
+
+      return;
+    }
+
+    io.to(roomCode).emit("game-state", {
+      room: updatedRoom,
+      currentTurn:
+        updatedRoom.turnOrder.length > 0 ? getCurrentTurn(updatedRoom) : "",
+    });
+
+    socket.emit("returned-to-lobby");
   });
   // =========================
   // NEXT TURN

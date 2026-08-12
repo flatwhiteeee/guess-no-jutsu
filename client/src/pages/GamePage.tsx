@@ -16,6 +16,7 @@ export default function GamePage() {
   const [showRoomCode, setShowRoomCode] = useState(false);
   const [reconnectRequest, setReconnectRequest] = useState<any>(null);
   const [gameFinished, setGameFinished] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [winners, setWinners] = useState<any[]>([]);
   const [losers, setLosers] = useState<any[]>([]);
   const wasDisconnected = useRef(false);
@@ -79,6 +80,13 @@ export default function GamePage() {
         ...prev,
         currentTurn: "",
       }));
+    });
+    socket.on("returned-to-lobby", () => {
+      navigate("/lobby", {
+        state: {
+          roomCode: game.room.roomCode,
+        },
+      });
     });
 
     socket.on("game-state", (data: any) => {
@@ -178,6 +186,7 @@ export default function GamePage() {
       socket.off("reconnect-request");
       socket.off("connect");
       socket.off("disconnect");
+      socket.off("returned-to-lobby");
     };
   }, []);
 
@@ -276,11 +285,7 @@ export default function GamePage() {
         }
         onPlayAgain={() => socket.emit("play-again", game.room.roomCode)}
         onLeave={() => {
-          socket.emit("leave-room", game.room.roomCode);
-
-          setTimeout(() => {
-            navigate("/");
-          }, 150);
+          socket.emit("return-to-lobby", game.room.roomCode);
         }}
       />
       <div className="min-h-screen bg-slate-950 p-8 text-white">
@@ -541,9 +546,57 @@ export default function GamePage() {
               </button>
             </div>
           )}
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => setShowLeaveConfirm(true)}
+              className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700"
+            >
+              🚪 Keluar Game
+            </button>
+          </div>
         </div>
-        <GameNotes resetKey={notesResetKey} />
+        <GameNotes
+          resetKey={notesResetKey}
+          currentTurn={game.currentTurn}
+          players={game.room.players}
+        />
       </div>
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-[90%] max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+            <div className="text-center">
+              <div className="text-4xl">🚪</div>
+
+              <h2 className="mt-3 text-2xl font-bold text-white">
+                Apakah kamu yakin?
+              </h2>
+
+              <p className="mt-3 text-slate-400">
+                Kamu akan keluar dari game dan kembali ke lobby.
+              </p>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => setShowLeaveConfirm(false)}
+                className="flex-1 rounded-xl bg-slate-700 py-3 font-bold text-white transition hover:bg-slate-600"
+              >
+                Tidak
+              </button>
+
+              <button
+                onClick={() => {
+                  socket.emit("leave-game", game.room.roomCode);
+                  setShowLeaveConfirm(false);
+                }}
+                className="flex-1 rounded-xl bg-red-600 py-3 font-bold text-white transition hover:bg-red-700"
+              >
+                Iya
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {reconnectRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="w-[90%] max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
