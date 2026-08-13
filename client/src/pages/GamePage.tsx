@@ -6,6 +6,24 @@ import GameResultModal from "../components/game/GameResultModal";
 import { useNavigate } from "react-router-dom";
 import GameNotification from "../components/ui/GameNotification";
 import GameNotes from "../components/game/GameNotes";
+import gameBgHorizontal from "../assets/game-bg-horizontal.png";
+import gameBgVertical from "../assets/game-bg-vertical.png";
+import gameInfoCard from "../assets/game-info-card.png";
+import nextTurnFrame from "../assets/next-turn-frame.png";
+import nextRoundFrame from "../assets/next-round-frame.png";
+import exitButtonFrame from "../assets/exit-button-frame.png";
+import submitAnswerFrame from "../assets/submit-answer-frame.png";
+import submitButton from "../assets/submit-button.png";
+
+import round1 from "../assets/round-1.png";
+import round2 from "../assets/round-2.png";
+import round3 from "../assets/round-3.png";
+import round4 from "../assets/round-4.png";
+import round5 from "../assets/round-5.png";
+import round6 from "../assets/round-6.png";
+import round7 from "../assets/round-7.png";
+import round8 from "../assets/round-8.png";
+import round9 from "../assets/round-9.png";
 
 export default function GamePage() {
   const { state } = useLocation();
@@ -261,6 +279,19 @@ export default function GamePage() {
   const formattedTime = `${minutes
     .toString()
     .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  const roundImages = [
+    round1,
+    round2,
+    round3,
+    round4,
+    round5,
+    round6,
+    round7,
+    round8,
+    round9,
+  ];
+
+  const currentRoundImage = roundImages[game.room.currentRound - 1];
 
   return (
     <>
@@ -288,8 +319,24 @@ export default function GamePage() {
           socket.emit("return-to-lobby", game.room.roomCode);
         }}
       />
-      <div className="min-h-screen bg-slate-950 p-8 text-white">
-        <div className="mx-auto w-full max-w-7xl">
+      <div className="relative min-h-screen overflow-x-hidden p-8 text-white">
+        {/* Background Mobile */}
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat md:hidden"
+          style={{
+            backgroundImage: `url(${gameBgVertical})`,
+          }}
+        />
+
+        {/* Background Desktop */}
+        <div
+          className="absolute inset-0 z-0 hidden bg-cover bg-center bg-no-repeat md:block"
+          style={{
+            backgroundImage: `url(${gameBgHorizontal})`,
+          }}
+        />
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl">
           {false && gameFinished && (
             <div className="mb-8 rounded-2xl border border-yellow-500 bg-yellow-500/10 p-6">
               {winners.length > 0 ? (
@@ -401,14 +448,18 @@ export default function GamePage() {
 
           <div className="mb-8 space-y-6">
             {/* Round */}
+            {/* Round */}
             <div className="text-center">
-              <h1 className="text-4xl font-extrabold lg:text-5xl">
-                Round {game.room.currentRound}
-              </h1>
+              <img
+                src={currentRoundImage}
+                alt={`Round ${game.room.currentRound}`}
+                className="mx-auto w-[220px] object-contain md:w-[280px]"
+              />
 
               <p className="mt-2 text-lg font-bold text-orange-400 lg:text-xl">
                 Current Turn : {game.currentTurn}
               </p>
+
               <div className="mt-3 text-center">
                 <p className="text-sm font-bold uppercase tracking-widest text-slate-400">
                   Time Remaining
@@ -420,47 +471,65 @@ export default function GamePage() {
               </div>
             </div>
 
-            {/* Info Match */}
-            <div className="mx-auto w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900/70 p-5 shadow-lg">
-              <h2 className="mb-4 text-center text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
-                Game Info
-              </h2>
+            {/* Game Info */}
+            <div className="relative mx-auto w-full max-w-[520px] aspect-[2048/1200]">
+              <img
+                src={gameInfoCard}
+                alt="Game Info"
+                className="absolute inset-0 h-full w-full object-contain"
+              />
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Players</span>
-                  <span className="font-bold">{game.room.players.length}</span>
-                </div>
+              <div className="absolute inset-0 flex flex-col px-[10%] py-[8%]">
+                {/* Title */}
+                <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.28em] text-slate-300 sm:text-sm">
+                  Game Info
+                </h2>
 
-                <div className="h-px bg-slate-700" />
+                {/* Content */}
+                <div className="mt-[5%] flex-1">
+                  <div className="flex items-center justify-between border-b border-slate-600/60 py-[2.5%]">
+                    <span className="text-sm text-slate-300 sm:text-base">
+                      Players
+                    </span>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Category</span>
-                  <span className="font-semibold text-orange-400">
-                    {game.room.category}
-                  </span>
-                </div>
+                    <span className="text-sm font-bold text-white sm:text-base">
+                      {game.room.players.length}
+                    </span>
+                  </div>
 
-                <div className="h-px bg-slate-700" />
+                  <div className="flex items-center justify-between border-b border-slate-600/60 py-[2.5%]">
+                    <span className="text-sm text-slate-300 sm:text-base">
+                      Category
+                    </span>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Difficulty</span>
-                  <span className="font-semibold">{game.room.difficulty}</span>
-                </div>
-                <div className="h-px bg-slate-700" />
+                    <span className="text-sm font-bold text-red-500 sm:text-base">
+                      {game.room.category}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Room Code</span>
+                  <div className="flex items-center justify-between border-b border-slate-600/60 py-[2.5%]">
+                    <span className="text-sm text-slate-300 sm:text-base">
+                      Difficulty
+                    </span>
 
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold tracking-widest">
-                      {showRoomCode ? game.room.roomCode : "••••••"}
+                    <span className="text-sm font-bold text-white sm:text-base">
+                      {game.room.difficulty}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-[2.5%]">
+                    <span className="text-sm text-slate-300 sm:text-base">
+                      Room Code
                     </span>
 
                     <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold tracking-widest text-white sm:text-base">
+                        {showRoomCode ? game.room.roomCode : "••••••"}
+                      </span>
+
                       <button
                         onClick={() => setShowRoomCode(!showRoomCode)}
-                        className="transition hover:scale-110"
+                        className="text-sm text-white transition hover:scale-110"
                       >
                         {showRoomCode ? "🙈" : "👁"}
                       </button>
@@ -468,7 +537,7 @@ export default function GamePage() {
                       {showRoomCode && (
                         <button
                           onClick={copyRoomCode}
-                          className="transition hover:scale-110"
+                          className="text-sm text-white transition hover:scale-110"
                           title="Copy Room Code"
                         >
                           📋
@@ -479,88 +548,152 @@ export default function GamePage() {
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {game.room.players.map((player: any) => (
-              <PlayerCard
-                key={player.id}
-                player={player}
-                isMe={player.sessionId === mySessionId}
-                isCurrentTurn={player.name === game.currentTurn}
-                currentTimeLeft={currentTimeLeft}
-              />
-            ))}
-          </div>
+            <div className="mt-8 grid grid-cols-1 gap-y-4 min-[900px]:grid-cols-2 min-[900px]:gap-x-0">
+              {game.room.players.map((player: any, index: number) => (
+                <div
+                  key={player.id}
+                  className={
+                    index === 0
+                      ? "min-[900px]:translate-x-8"
+                      : "min-[900px]:-translate-x-8"
+                  }
+                >
+                  <PlayerCard
+                    player={player}
+                    isMe={player.sessionId === mySessionId}
+                    isCurrentTurn={player.name === game.currentTurn}
+                    currentTimeLeft={currentTimeLeft}
+                  />
+                </div>
+              ))}
+            </div>
 
-          {canAnswer && (
-            <div className="mt-8 rounded-xl bg-slate-800 p-6">
-              <h2 className="mb-4 text-xl font-bold">Submit Answer</h2>
+            {canAnswer && (
+              <div className="relative mx-auto mt-8 w-full max-w-[900px] aspect-[3/1]">
+                <img
+                  src={submitAnswerFrame}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-fill"
+                />
 
-              <input
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                className="w-full rounded-xl bg-slate-700 p-3"
-                placeholder="Contoh : Uchiha Itachi"
-              />
+                <div className="absolute inset-0 flex flex-col px-[12%] pt-[18%] pb-[8%]">
+                  <input
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    className="
+  w-[450px]
+  relative top-[-20px]
+  relative left-[60px]
+  h-[42px]
+  px-2
+  bg-transparent
+  border-0
+  border-b-2
+  border-b-red-900/70
+  text-white
+  placeholder:text-gray-400/60
+  rounded-none
+  outline-none
+  transition-all duration-200
+  focus:border-b-red-500
+  focus:shadow-[0_6px_12px_rgba(180,0,0,0.25)]
+"
+                    placeholder="Contoh : Itachi"
+                  />
 
+                  <button
+                    disabled={me?.answeredThisRound || answer.trim() === ""}
+                    onClick={() => {
+                      if (answer.trim() === "") return;
+
+                      socket.emit("submit-answer", {
+                        roomCode: game.room.roomCode,
+                        answer: answer.trim(),
+                      });
+
+                      setAnswer("");
+                    }}
+                    className="absolute bottom-[0%] left-[12%] w-[220px] transition-all duration-200 ease-out hover:scale-105 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:brightness-100"
+                  >
+                    <img
+                      src={submitButton}
+                      alt="Submit"
+                      className="h-auto w-full object-contain"
+                    />
+
+                    <span className="absolute inset-0 z-10 flex items-center justify-center font-bold text-white">
+                      Submit
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isHost && (
+              <div className="mt-8 flex justify-center gap-4">
+                <button
+                  disabled={
+                    game.room.turnIndex === game.room.turnOrder.length - 1
+                  }
+                  onClick={() => socket.emit("next-turn", game.room.roomCode)}
+                  className="relative w-[250px] aspect-[3/1] transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:brightness-100"
+                >
+                  <img
+                    src={nextTurnFrame}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-fill"
+                  />
+
+                  <span className="relative z-10 font-bold text-white">
+                    Next Turn
+                  </span>
+                </button>
+
+                <button
+                  disabled={
+                    game.room.turnIndex !== game.room.turnOrder.length - 1
+                  }
+                  onClick={() => socket.emit("next-round", game.room.roomCode)}
+                  className="relative w-[250px] aspect-[3/1] transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:brightness-100"
+                >
+                  <img
+                    src={nextRoundFrame}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-fill"
+                  />
+
+                  <span className="relative z-10 font-bold text-white">
+                    Next Round
+                  </span>
+                </button>
+              </div>
+            )}
+            <div className="mt-[-50px] flex justify-center">
               <button
-                disabled={me?.answeredThisRound || answer.trim() === ""}
-                onClick={() => {
-                  if (answer.trim() === "") return;
-
-                  socket.emit("submit-answer", {
-                    roomCode: game.room.roomCode,
-                    answer: answer.trim(),
-                  });
-
-                  setAnswer("");
-                }}
-                className="mt-4 rounded-xl bg-orange-500 px-5 py-3 disabled:opacity-40"
+                onClick={() => setShowLeaveConfirm(true)}
+                className="group relative w-[220px] opacity-70 transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:opacity-100 hover:brightness-125 hover:drop-shadow-[0_0_18px_rgba(255,70,30,0.75)]"
               >
-                Submit
+                <img
+                  src={exitButtonFrame}
+                  alt=""
+                  className="h-auto w-full object-contain"
+                />
+
+                <span className="absolute inset-0 z-10 flex items-center justify-center pt-1 text-[14px] font-bold text-white">
+                  Keluar Game
+                </span>
               </button>
             </div>
-          )}
-
-          {isHost && (
-            <div className="mt-8 flex justify-center gap-4">
-              <button
-                disabled={
-                  game.room.turnIndex === game.room.turnOrder.length - 1
-                }
-                onClick={() => socket.emit("next-turn", game.room.roomCode)}
-                className="rounded-xl bg-orange-500 px-6 py-3 font-bold disabled:opacity-40"
-              >
-                Next Turn
-              </button>
-
-              <button
-                disabled={
-                  game.room.turnIndex !== game.room.turnOrder.length - 1
-                }
-                onClick={() => socket.emit("next-round", game.room.roomCode)}
-                className="rounded-xl bg-green-600 px-6 py-3 font-bold disabled:opacity-40"
-              >
-                Next Round
-              </button>
-            </div>
-          )}
-          <div className="mt-6 flex justify-center">
-            <button
-              onClick={() => setShowLeaveConfirm(true)}
-              className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700"
-            >
-              🚪 Keluar Game
-            </button>
           </div>
+          <GameNotes
+            resetKey={notesResetKey}
+            currentTurn={game.currentTurn}
+            players={game.room.players}
+          />
         </div>
-        <GameNotes
-          resetKey={notesResetKey}
-          currentTurn={game.currentTurn}
-          players={game.room.players}
-        />
       </div>
+
       {showLeaveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="w-[90%] max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
