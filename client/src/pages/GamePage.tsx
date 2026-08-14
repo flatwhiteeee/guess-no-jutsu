@@ -24,6 +24,7 @@ import round6 from "../assets/round-6.png";
 import round7 from "../assets/round-7.png";
 import round8 from "../assets/round-8.png";
 import round9 from "../assets/round-9.png";
+import round10 from "../assets/round-10.png";
 
 export default function GamePage() {
   const { state } = useLocation();
@@ -289,6 +290,7 @@ export default function GamePage() {
     round7,
     round8,
     round9,
+    round10,
   ];
 
   const currentRoundImage = roundImages[game.room.currentRound - 1];
@@ -322,7 +324,7 @@ export default function GamePage() {
       <div className="relative min-h-screen overflow-x-hidden p-8 text-white">
         {/* Background Mobile */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat md:hidden"
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat md:hidden"
           style={{
             backgroundImage: `url(${gameBgVertical})`,
           }}
@@ -330,7 +332,7 @@ export default function GamePage() {
 
         {/* Background Desktop */}
         <div
-          className="absolute inset-0 z-0 hidden bg-cover bg-center bg-no-repeat md:block"
+          className="fixed inset-0 z-0 hidden bg-cover bg-center bg-no-repeat md:block"
           style={{
             backgroundImage: `url(${gameBgHorizontal})`,
           }}
@@ -472,7 +474,7 @@ export default function GamePage() {
             </div>
 
             {/* Game Info */}
-            <div className="relative mx-auto w-full max-w-[520px] aspect-[2048/1200]">
+            <div className="relative mx-auto w-full max-w-[850px] aspect-[2048/1200]">
               <img
                 src={gameInfoCard}
                 alt="Game Info"
@@ -481,49 +483,49 @@ export default function GamePage() {
 
               <div className="absolute inset-0 flex flex-col px-[10%] py-[8%]">
                 {/* Title */}
-                <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.28em] text-slate-300 sm:text-sm">
+                <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.28em] text-slate-300 sm:text-[20px]">
                   Game Info
                 </h2>
 
                 {/* Content */}
                 <div className="mt-[5%] flex-1">
                   <div className="flex items-center justify-between border-b border-slate-600/60 py-[2.5%]">
-                    <span className="text-sm text-slate-300 sm:text-base">
+                    <span className="text-sm text-slate-300 sm:text-lg">
                       Players
                     </span>
 
-                    <span className="text-sm font-bold text-white sm:text-base">
+                    <span className="text-sm font-bold text-white sm:text-lg">
                       {game.room.players.length}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between border-b border-slate-600/60 py-[2.5%]">
-                    <span className="text-sm text-slate-300 sm:text-base">
+                    <span className="text-sm text-slate-300 sm:text-lg">
                       Category
                     </span>
 
-                    <span className="text-sm font-bold text-red-500 sm:text-base">
+                    <span className="text-sm font-bold text-red-500 sm:text-lg">
                       {game.room.category}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between border-b border-slate-600/60 py-[2.5%]">
-                    <span className="text-sm text-slate-300 sm:text-base">
+                    <span className="text-sm text-slate-300 sm:text-lg">
                       Difficulty
                     </span>
 
-                    <span className="text-sm font-bold text-white sm:text-base">
+                    <span className="text-sm font-bold text-white sm:text-lg">
                       {game.room.difficulty}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between py-[2.5%]">
-                    <span className="text-sm text-slate-300 sm:text-base">
+                    <span className="text-sm text-slate-300 sm:text-lg">
                       Room Code
                     </span>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold tracking-widest text-white sm:text-base">
+                      <span className="text-sm font-bold tracking-widest text-white sm:text-lg">
                         {showRoomCode ? game.room.roomCode : "••••••"}
                       </span>
 
@@ -549,24 +551,30 @@ export default function GamePage() {
               </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 gap-y-4 min-[900px]:grid-cols-2 min-[900px]:gap-x-0">
-              {game.room.players.map((player: any, index: number) => (
-                <div
-                  key={player.id}
-                  className={
-                    index === 0
-                      ? "min-[900px]:translate-x-8"
-                      : "min-[900px]:-translate-x-8"
-                  }
-                >
-                  <PlayerCard
-                    player={player}
-                    isMe={player.sessionId === mySessionId}
-                    isCurrentTurn={player.name === game.currentTurn}
-                    currentTimeLeft={currentTimeLeft}
-                  />
-                </div>
-              ))}
+            <div className="mx-auto mt-8 grid w-full max-w-[1180px] grid-cols-2 justify-items-center gap-x-100 gap-y-5 max-md:grid-cols-1 max-md:gap-x-0 max-md:gap-y-6 max-md:px-0">
+              {game.room.players.map((player: any, index: number) => {
+                const isLastOddPlayer =
+                  game.room.players.length % 2 === 1 &&
+                  index === game.room.players.length - 1;
+
+                return (
+                  <div
+                    key={player.id}
+                    className={`w-[880px] min-w-[880px] max-md:w-[calc(100vw-24px)] max-md:min-w-0 ${
+                      isLastOddPlayer
+                        ? "col-span-2 justify-self-center max-md:col-span-1"
+                        : ""
+                    }`}
+                  >
+                    <PlayerCard
+                      player={player}
+                      isMe={player.sessionId === mySessionId}
+                      isCurrentTurn={player.name === game.currentTurn}
+                      currentTimeLeft={currentTimeLeft}
+                    />
+                  </div>
+                );
+              })}
             </div>
 
             {canAnswer && (
@@ -583,13 +591,18 @@ export default function GamePage() {
                     onChange={(e) => setAnswer(e.target.value)}
                     className="
   w-[450px]
+  max-md:w-[150px]
   relative top-[-20px]
   relative left-[60px]
+  max-md:top-[-10px]
+  max-md:left-[30px]
+  max-md:text-[10px]
   h-[42px]
   px-2
   bg-transparent
   border-0
   border-b-2
+  max-md:border-b-1
   border-b-red-900/70
   text-white
   placeholder:text-gray-400/60
@@ -614,7 +627,23 @@ export default function GamePage() {
 
                       setAnswer("");
                     }}
-                    className="absolute bottom-[0%] left-[12%] w-[220px] transition-all duration-200 ease-out hover:scale-105 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:brightness-100"
+                    className="
+  absolute
+  bottom-[0%]
+  left-[12%]
+  w-[220px]
+  max-md:w-[150px]
+  max-md:bottom-[-25%]
+  max-md:left-[5%]
+  transition-all
+  duration-200
+  ease-out
+  hover:scale-105
+  hover:brightness-125
+  disabled:opacity-40
+  disabled:hover:scale-100
+  disabled:hover:brightness-100
+"
                   >
                     <img
                       src={submitButton}
@@ -637,7 +666,7 @@ export default function GamePage() {
                     game.room.turnIndex === game.room.turnOrder.length - 1
                   }
                   onClick={() => socket.emit("next-turn", game.room.roomCode)}
-                  className="relative w-[250px] aspect-[3/1] transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:brightness-100"
+                  className="relative w-[400px] aspect-[3/1] transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:brightness-100"
                 >
                   <img
                     src={nextTurnFrame}
@@ -655,7 +684,7 @@ export default function GamePage() {
                     game.room.turnIndex !== game.room.turnOrder.length - 1
                   }
                   onClick={() => socket.emit("next-round", game.room.roomCode)}
-                  className="relative w-[250px] aspect-[3/1] transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:brightness-100"
+                  className="relative w-[400px] aspect-[3/1] transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:brightness-125 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:brightness-100"
                 >
                   <img
                     src={nextRoundFrame}
@@ -669,10 +698,10 @@ export default function GamePage() {
                 </button>
               </div>
             )}
-            <div className="mt-[-50px] flex justify-center">
+            <div className="mt-[-50px] max-md:translate-y-[30px] flex justify-center">
               <button
                 onClick={() => setShowLeaveConfirm(true)}
-                className="group relative w-[220px] opacity-70 transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:opacity-100 hover:brightness-125 hover:drop-shadow-[0_0_18px_rgba(255,70,30,0.75)]"
+                className="group relative w-[400px] max-md:w-[220px] opacity-70 transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:opacity-100 hover:brightness-125 hover:drop-shadow-[0_0_18px_rgba(255,70,30,0.75)]"
               >
                 <img
                   src={exitButtonFrame}

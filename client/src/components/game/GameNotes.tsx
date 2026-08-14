@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import gameNotesScroll from "../../assets/game-notes-scroll.png";
 
 export default function GameNotes({
   resetKey,
@@ -92,9 +93,13 @@ export default function GameNotes({
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-2xl shadow-xl transition hover:bg-orange-400"
+          className="fixed bottom-4 right-4 z-40 w-20 transition-all duration-200 hover:scale-105 hover:brightness-125 md:bottom-6 md:right-6 md:w-24"
         >
-          📋
+          <img
+            src={gameNotesScroll}
+            alt="Open Notes"
+            className="h-auto w-full object-contain"
+          />
         </button>
       )}
 
