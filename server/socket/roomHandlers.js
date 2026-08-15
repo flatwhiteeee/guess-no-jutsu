@@ -59,6 +59,8 @@ function debugTurn(room, label) {
       failed: player.failed,
       connected: player.connected,
       answeredThisRound: player.answeredThisRound,
+      timerLeft: player.timerLeft,
+      timerStartedAt: player.timerStartedAt,
     })),
   );
 
