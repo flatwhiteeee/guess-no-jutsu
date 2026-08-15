@@ -31,6 +31,12 @@ export default function GamePage() {
   const [answer, setAnswer] = useState("");
   const [notesResetKey, setNotesResetKey] = useState(0);
   const [currentTimeLeft, setCurrentTimeLeft] = useState(0);
+  const timerAnchorRef = useRef<{
+    playerId: string;
+    timerStartedAt: number;
+    timerLeft: number;
+    clientStartedAt: number;
+  } | null>(null);
   const [game, setGame] = useState<any>(state?.game);
   const [showRoomCode, setShowRoomCode] = useState(false);
   const [reconnectRequest, setReconnectRequest] = useState<any>(null);
@@ -217,18 +223,43 @@ export default function GamePage() {
     );
 
     if (!currentPlayer || !currentPlayer.timerStartedAt) {
+      timerAnchorRef.current = null;
       setCurrentTimeLeft(currentPlayer?.timerLeft ?? 0);
       return;
     }
 
+    const timerStartedAt = currentPlayer.timerStartedAt;
+
+    // Buat anchor baru hanya ketika turn/timer benar-benar berubah.
+    // Kita tidak menggunakan Date.now() - timerStartedAt karena
+    // timerStartedAt berasal dari clock server.
+    if (
+      !timerAnchorRef.current ||
+      timerAnchorRef.current.playerId !== currentPlayer.id ||
+      timerAnchorRef.current.timerStartedAt !== timerStartedAt
+    ) {
+      timerAnchorRef.current = {
+        playerId: currentPlayer.id,
+        timerStartedAt,
+        timerLeft: currentPlayer.timerLeft,
+        clientStartedAt: performance.now(),
+      };
+    }
+
     const updateTimer = () => {
+      if (!timerAnchorRef.current) return;
+
       const elapsedSeconds = Math.floor(
-        (Date.now() - currentPlayer.timerStartedAt) / 1000,
+        (performance.now() - timerAnchorRef.current.clientStartedAt) / 1000,
       );
 
-      const remaining = Math.max(currentPlayer.timerLeft - elapsedSeconds, 0);
+      const remaining = Math.max(
+        timerAnchorRef.current.timerLeft - elapsedSeconds,
+        0,
+      );
 
       setCurrentTimeLeft(remaining);
+
       if (remaining === 0 && currentPlayer.name === me?.name) {
         socket.emit("timer-expired", game.room.roomCode);
       }
