@@ -30,7 +30,40 @@ const {
   nextTurn,
   useQuestion,
 } = require("../services/gameService");
+function debugTurn(room, label) {
+  if (!room) return;
 
+  console.log(`\n========== ${label} ==========`);
+
+  console.log("Room:", room.roomCode);
+  console.log("Round:", room.currentRound);
+  console.log("Turn Index:", room.turnIndex);
+  console.log("Turn Order:", room.turnOrder);
+
+  const currentId = room.turnOrder[room.turnIndex];
+
+  const currentPlayer = room.players.find((player) => player.id === currentId);
+
+  console.log(
+    "Current Turn:",
+    currentPlayer ? `${currentPlayer.name} (${currentPlayer.id})` : "NONE",
+  );
+
+  console.log(
+    "Players:",
+    room.players.map((player) => ({
+      name: player.name,
+      id: player.id,
+      sessionId: player.sessionId,
+      solved: player.solved,
+      failed: player.failed,
+      connected: player.connected,
+      answeredThisRound: player.answeredThisRound,
+    })),
+  );
+
+  console.log("================================\n");
+}
 function registerRoomHandlers(io, socket) {
   // =========================
   // CREATE ROOM
@@ -320,6 +353,7 @@ function registerRoomHandlers(io, socket) {
     const room = getRoomData(roomCode);
 
     if (!room) return;
+    debugTurn(room, `NEXT TURN - BEFORE - ${socket.id}`);
 
     if (room.turnIndex >= room.turnOrder.length - 1) {
       return;
@@ -358,6 +392,7 @@ function registerRoomHandlers(io, socket) {
       // =========================
       startTurnTimer(room);
     }
+    debugTurn(room, `NEXT TURN - AFTER - ${socket.id}`);
 
     io.to(roomCode).emit("game-state", {
       room,
@@ -508,6 +543,10 @@ function registerRoomHandlers(io, socket) {
   socket.on("disconnect", () => {
     const room = disconnectPlayer(socket.id);
 
+    if (room) {
+      debugTurn(room, `DISCONNECT - ${socket.id}`);
+    }
+
     if (!room) return;
 
     if (room.roomClosed) {
@@ -540,6 +579,7 @@ function registerRoomHandlers(io, socket) {
     const result = approveReconnect(sessionId, socketId);
 
     if (!result.success) return;
+    debugTurn(result.room, `RECONNECT APPROVED - ${socketId}`);
 
     const reconnectSocket = io.sockets.sockets.get(socketId);
 
@@ -575,6 +615,8 @@ function registerRoomHandlers(io, socket) {
     const room = getRoomData(roomCode);
 
     if (!room) return;
+
+    debugTurn(room, `SUBMIT ANSWER - BEFORE - ${socket.id}`);
     if (!answer || answer.trim() === "") {
       socket.emit("answer-result", "empty_answer");
       return;
@@ -616,10 +658,11 @@ function registerRoomHandlers(io, socket) {
     const result = checkAnswer(roomCode, socket.id, answer);
 
     if (!result) return;
+
+    debugTurn(result.room, `SUBMIT ANSWER - AFTER CHECK - ${socket.id}`);
     // Tandai bahwa player sudah memakai kesempatan menjawab di ronde ini
     result.player.answeredThisRound = true;
 
-    // Langsung keluarkan dari turn jika sudah selesai bermain
     // Langsung keluarkan dari turn jika sudah selesai bermain
     if (result.player.solved || result.player.failed) {
       refreshTurnOrder(result.room);
@@ -628,6 +671,7 @@ function registerRoomHandlers(io, socket) {
         startTurnTimer(result.room);
       }
     }
+    debugTurn(result.room, `AFTER REFRESH TURN - ${result.player.name}`);
 
     const currentTurn =
       result.room.turnOrder.length > 0 ? getCurrentTurn(result.room) : "";
