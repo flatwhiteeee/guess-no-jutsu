@@ -31,6 +31,7 @@ export default function GamePage() {
   const [answer, setAnswer] = useState("");
   const [notesResetKey, setNotesResetKey] = useState(0);
   const [currentTimeLeft, setCurrentTimeLeft] = useState(0);
+  const [requestedNextRound, setRequestedNextRound] = useState(false);
   const timerAnchorRef = useRef<{
     playerId: string;
     timerStartedAt: number;
@@ -116,6 +117,7 @@ export default function GamePage() {
 
     socket.on("game-state", (data: any) => {
       setGame(data);
+      setRequestedNextRound(false);
     });
 
     socket.on("disconnect", () => {
@@ -304,6 +306,12 @@ export default function GamePage() {
     game.currentTurn === me?.name &&
     !me?.solved &&
     me?.answerLeft > 0;
+  const canNextTurn = game.currentTurn === me?.name && !isHost;
+
+  const isLastTurnWithoutHost =
+    game.room.turnOrder.length > 0 &&
+    game.room.turnIndex === game.room.turnOrder.length - 1 &&
+    !isHost;
 
   const minutes = Math.floor(currentTimeLeft / 60);
   const seconds = currentTimeLeft % 60;
@@ -689,7 +697,38 @@ export default function GamePage() {
                 </div>
               </div>
             )}
+            {canNextTurn && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  disabled={requestedNextRound}
+                  onClick={() => {
+                    if (isLastTurnWithoutHost) {
+                      setRequestedNextRound(true);
+                      return;
+                    }
 
+                    socket.emit("next-turn", game.room.roomCode);
+                  }}
+                  className="relative w-[400px] max-md:w-[270px] aspect-[3/1] transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-1 hover:brightness-125 disabled:opacity-100 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:brightness-100"
+                >
+                  <img
+                    src={nextTurnFrame}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-fill"
+                  />
+
+                  <span className="relative z-10 font-bold text-slate-200">
+                    {requestedNextRound || isLastTurnWithoutHost ? (
+                      <span className="max-md:text-[11px]">
+                        Minta Host Pencet Next Round
+                      </span>
+                    ) : (
+                      <span className="max-md:text-[16px]">Next Turn</span>
+                    )}
+                  </span>
+                </button>
+              </div>
+            )}
             {isHost && (
               <div className="mt-8 flex justify-center gap-4">
                 <button

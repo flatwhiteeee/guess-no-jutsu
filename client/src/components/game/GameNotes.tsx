@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import gameNotesScroll from "../../assets/game-notes-scroll.png";
+import gameNotesScrollPopup from "../../assets/game-notes-scroll-popup.png";
+import gameNotesScrollMobile from "../../assets/game-notes-scroll-mobile.png";
+import gameNotesPopupExit from "../../assets/game-notes-popup-exit.png";
 
 export default function GameNotes({
   resetKey,
@@ -11,8 +14,11 @@ export default function GameNotes({
   players: any[];
 }) {
   const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState("• ");
   const previousPlayers = useRef<any[] | null>(null);
+  const leftNotesRef = useRef<HTMLTextAreaElement>(null);
+  const rightNotesRef = useRef<HTMLTextAreaElement>(null);
+  const mobileNoteRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [turnIndicator, setTurnIndicator] = useState<{
     type: "turn" | "solved" | "failed";
@@ -22,7 +28,7 @@ export default function GameNotes({
     playerName: currentTurn,
   });
   useEffect(() => {
-    setNotes("");
+    setNotes("• ");
   }, [resetKey]);
   useEffect(() => {
     if (!players) return;
@@ -86,7 +92,13 @@ export default function GameNotes({
 
     previousPlayers.current = players;
   }, [players, currentTurn]);
+  const noteLines = notes.split("\n");
 
+  const leftNoteLines = noteLines.slice(0, 5);
+  const rightNoteLines = noteLines.slice(5, 10);
+
+  const leftNotes = leftNoteLines.join("\n");
+  const rightNotes = rightNoteLines.join("\n");
   return (
     <>
       {/* Floating Button */}
@@ -113,62 +125,484 @@ export default function GameNotes({
 
       {/* Bottom Sheet */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-slate-900 transition-all duration-300 ease-out ${
+        className={`fixed inset-x-0 bottom-0 z-50 transition-all duration-300 ease-out ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="mx-auto w-full max-w-xl p-5">
-          <div className="mb-4 flex justify-center">
-            <div className="h-1.5 w-14 rounded-full bg-slate-600" />
-          </div>
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white">Notes</h2>
+        <div className="relative mx-auto w-full max-w-[1100px]">
+          {/* Popup Notes Asset — DESKTOP */}
+          <img
+            src={gameNotesScrollPopup}
+            alt="Notes"
+            className="hidden h-auto w-full object-contain md:block"
+          />
 
-              <p className="mt-1 text-sm text-slate-400">
-                Catat petunjuk karakter selama permainan.
-              </p>
-              <div
-                className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
-                  turnIndicator.type === "solved"
-                    ? "bg-green-500/10 text-green-400"
-                    : turnIndicator.type === "failed"
-                      ? "bg-red-500/10 text-red-400"
-                      : "bg-orange-500/10 text-orange-400"
-                }`}
-              >
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    turnIndicator.type === "solved"
-                      ? "bg-green-400"
-                      : turnIndicator.type === "failed"
-                        ? "bg-red-400"
-                        : "bg-orange-400"
-                  }`}
-                />
+          {/* Popup Notes Asset — MOBILE */}
+          <img
+            src={gameNotesScrollMobile}
+            alt="Notes Mobile"
+            className="block h-auto w-full object-contain md:hidden"
+          />
 
-                {turnIndicator.type === "solved"
-                  ? `${turnIndicator.playerName} SOLVED`
-                  : turnIndicator.type === "failed"
-                    ? `${turnIndicator.playerName} GUGUR`
-                    : `Giliran: ${turnIndicator.playerName || "-"}`}
-              </div>
-            </div>
-
+          {/* Popup Content */}
+          <div className="absolute inset-0">
+            {/* Close Button */}
             <button
               onClick={() => setOpen(false)}
-              className="text-2xl text-slate-400 hover:text-white"
+              className="absolute right-[15%] top-[12%] z-10 w-[50px] transition-all duration-200 hover:scale-110 hover:brightness-125 md:right-[14%] md:top-[27%] md:w-[90px]"
             >
-              ✕
+              <img
+                src={gameNotesPopupExit}
+                alt="Close Notes"
+                className="h-auto w-full object-contain"
+              />
             </button>
-          </div>
 
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Mulai tulis petunjukmu di sini..."
-            className="h-56 w-full resize-none rounded-2xl border border-slate-700 bg-slate-800 p-4 text-white shadow-inner outline-none transition focus:border-orange-500 placeholder:text-slate-500"
-          />
+            {/* Turn Indicator */}
+            <div
+              className={`absolute left-1/2 top-[16%] -translate-x-1/2 inline-flex items-center gap-2 px-2 py-1 text-[16px] font-semibold md:top-[27%] md:px-3 md:py-1.5 md:text-[20px] ${
+                turnIndicator.type === "solved"
+                  ? "text-[#3f7d20]"
+                  : turnIndicator.type === "failed"
+                    ? "text-[#dc2626]"
+                    : "text-[#7f1d1d]"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  turnIndicator.type === "solved"
+                    ? "text-[#3f7d20]"
+                    : turnIndicator.type === "failed"
+                      ? "text-[#dc2626]"
+                      : "text-[#7f1d1d]"
+                }`}
+              />
+
+              {turnIndicator.type === "solved"
+                ? `${turnIndicator.playerName} SOLVED`
+                : turnIndicator.type === "failed"
+                  ? `${turnIndicator.playerName} GUGUR`
+                  : `Giliran: ${turnIndicator.playerName || "-"}`}
+            </div>
+            {/* Mobile Divider */}
+            <div className="absolute left-1/2 top-[22%] w-[55%] -translate-x-1/2 border-t-[2px] border-[#7f1d1d]/80 md:hidden" />
+
+            {/* Notes Input Area */}
+            <div className="absolute inset-0 hidden md:block">
+              {/* LEFT COLUMN — Bullet 1–6 */}
+              <textarea
+                ref={leftNotesRef}
+                value={leftNotes}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  const lines = value.split("\n");
+
+                  const limitedLines = lines.map((line) => {
+                    const bullet = line.startsWith("• ") ? "• " : "";
+                    const content = line.startsWith("• ")
+                      ? line.slice(2)
+                      : line;
+
+                    return bullet + content.slice(0, 26);
+                  });
+
+                  const newLeftNotes = limitedLines.join("\n");
+
+                  setNotes(
+                    rightNotes
+                      ? `${newLeftNotes}\n${rightNotes}`
+                      : newLeftNotes,
+                  );
+                }}
+                onKeyDown={(e) => {
+                  const textarea = e.currentTarget;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+
+                  // CTRL + A
+                  // Bullet pertama tetap tidak ikut terseleksi.
+                  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+                    e.preventDefault();
+
+                    requestAnimationFrame(() => {
+                      textarea.selectionStart = 2;
+                      textarea.selectionEnd = leftNotes.length;
+                    });
+
+                    return;
+                  }
+
+                  // ENTER
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+
+                    const lineNumber = leftNotes
+                      .substring(0, start)
+                      .split("\n").length;
+
+                    const newValue =
+                      leftNotes.substring(0, start) +
+                      "\n• " +
+                      leftNotes.substring(end);
+
+                    const newLines = newValue.split("\n");
+
+                    const newLeft = newLines.slice(0, 6).join("\n");
+                    const newRight = newLines.slice(6).join("\n");
+
+                    setNotes(newRight ? `${newLeft}\n${newRight}` : newLeft);
+
+                    // Kalau Enter dilakukan pada bullet ke-6,
+                    // pindahkan cursor ke kolom kanan.
+                    if (lineNumber === 5) {
+                      requestAnimationFrame(() => {
+                        rightNotesRef.current?.focus();
+
+                        rightNotesRef.current?.setSelectionRange(2, 2);
+                      });
+                    } else {
+                      requestAnimationFrame(() => {
+                        const cursorPosition = start + 3;
+
+                        textarea.selectionStart = cursorPosition;
+                        textarea.selectionEnd = cursorPosition;
+                      });
+                    }
+
+                    return;
+                  }
+
+                  // BACKSPACE
+                  if (e.key === "Backspace" && start === end) {
+                    // Bullet pertama tidak boleh dihapus.
+                    if (start <= 2) {
+                      e.preventDefault();
+                      return;
+                    }
+                  }
+
+                  // DELETE
+                  if (e.key === "Delete" && start === end) {
+                    if (start < 2) {
+                      e.preventDefault();
+                      return;
+                    }
+                  }
+                }}
+                placeholder=""
+                className="
+      absolute
+      left-[16%]
+      top-[35%]
+      bottom-[14%]
+      w-[35%]
+      resize-none
+      overflow-y-auto
+      overflow-x-hidden
+      border-0
+      bg-transparent
+      p-2
+      text-lg
+      font-bold
+      leading-relaxed
+      text-[#1f1713]
+      outline-none
+      whitespace-pre-wrap
+      break-words
+    "
+              />
+
+              {/* RIGHT COLUMN — Bullet 7+ */}
+              <textarea
+                ref={rightNotesRef}
+                value={rightNotes}
+                onFocus={() => {
+                  if (leftNoteLines.length < 5) {
+                    requestAnimationFrame(() => {
+                      leftNotesRef.current?.focus();
+
+                      const cursorPosition = leftNotes.length;
+
+                      leftNotesRef.current?.setSelectionRange(
+                        cursorPosition,
+                        cursorPosition,
+                      );
+                    });
+                  }
+                }}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  const lines = value.split("\n");
+
+                  const limitedLines = lines.map((line) => {
+                    const bullet = line.startsWith("• ") ? "• " : "";
+                    const content = line.startsWith("• ")
+                      ? line.slice(2)
+                      : line;
+
+                    return bullet + content.slice(0, 23);
+                  });
+
+                  const newRightNotes = limitedLines.join("\n");
+
+                  setNotes(
+                    newRightNotes
+                      ? `${leftNotes}\n${newRightNotes}`
+                      : leftNotes,
+                  );
+                }}
+                onKeyDown={(e) => {
+                  const textarea = e.currentTarget;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+
+                  // ENTER
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+
+                    // Maksimal 10 dot total
+                    if (noteLines.length >= 10) {
+                      return;
+                    }
+
+                    const newValue =
+                      rightNotes.substring(0, start) +
+                      "\n• " +
+                      rightNotes.substring(end);
+
+                    setNotes(`${leftNotes}\n${newValue}`);
+
+                    requestAnimationFrame(() => {
+                      const cursorPosition = start + 3;
+
+                      textarea.selectionStart = cursorPosition;
+                      textarea.selectionEnd = cursorPosition;
+                    });
+
+                    return;
+                  }
+
+                  // BACKSPACE
+                  // Bullet di kolom kanan boleh dihapus.
+                  if (e.key === "Backspace") {
+                    return;
+                  }
+
+                  // DELETE
+                  if (e.key === "Delete") {
+                    return;
+                  }
+                }}
+                placeholder=""
+                className="
+      absolute
+      left-[50%]
+      top-[35%]
+      bottom-[14%]
+      w-[35%]
+      resize-none
+      overflow-y-auto
+      overflow-x-hidden
+      border-0
+      bg-transparent
+      p-2
+      text-lg
+      font-bold
+      leading-relaxed
+      text-[#1f1713]
+      outline-none
+      whitespace-pre-wrap
+      break-words
+    "
+              />
+            </div>
+            {/* MOBILE NOTES INPUT */}
+            <div
+              className="
+    absolute
+    left-1/2
+    top-[27%]
+    h-[65%]
+    w-[72%]
+    -translate-x-1/2
+    overflow-y-auto
+    overflow-x-hidden
+    px-10
+    text-[16px]
+    font-bold
+    leading-[1.55]
+    text-[#1f1713]
+    md:hidden
+  "
+            >
+              {noteLines.map((line, index) => {
+                const content = line.startsWith("• ") ? line.slice(2) : line;
+
+                return (
+                  <div key={index} className="flex items-start">
+                    {/* DOT */}
+                    <span
+                      className="
+            w-[18px]
+            shrink-0
+            select-none
+          "
+                    >
+                      •
+                    </span>
+
+                    {/* TEXT */}
+                    <div
+                      ref={(el) => {
+                        mobileNoteRefs.current[index] = el;
+                      }}
+                      contentEditable
+                      suppressContentEditableWarning
+                      spellCheck={false}
+                      onBeforeInput={(e) => {
+                        const target = e.currentTarget;
+
+                        const selection = window.getSelection();
+
+                        if (!selection || selection.rangeCount === 0) {
+                          return;
+                        }
+
+                        const currentText = target.innerText;
+
+                        const selectedText = selection.toString();
+
+                        // Berapa karakter yang akan tersisa setelah selection diganti
+                        const remainingLength =
+                          currentText.length - selectedText.length;
+
+                        // Kalau sudah mencapai 35 karakter
+                        // dan user tidak sedang mengganti/menyeleksi text,
+                        // cegah karakter baru masuk.
+                        if (remainingLength >= 35 && selection.isCollapsed) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        // ENTER → buat dot baru
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+
+                          if (noteLines.length >= 10) {
+                            return;
+                          }
+
+                          const selection = window.getSelection();
+
+                          if (!selection || selection.rangeCount === 0) {
+                            return;
+                          }
+
+                          const range = selection.getRangeAt(0);
+
+                          const cursorOffset = range.startOffset;
+
+                          const before = content.slice(0, cursorOffset);
+                          const after = content.slice(cursorOffset);
+
+                          const newLines = [...noteLines];
+
+                          newLines[index] = `• ${before}`;
+                          newLines.splice(index + 1, 0, `• ${after}`);
+
+                          setNotes(newLines.join("\n"));
+
+                          requestAnimationFrame(() => {
+                            const next = mobileNoteRefs.current[index + 1];
+
+                            if (!next) return;
+
+                            next.focus();
+
+                            const range = document.createRange();
+                            range.selectNodeContents(next);
+                            range.collapse(true);
+
+                            const selection = window.getSelection();
+
+                            selection?.removeAllRanges();
+                            selection?.addRange(range);
+                          });
+
+                          return;
+                        }
+
+                        // BACKSPACE
+                        if (e.key === "Backspace") {
+                          const selection = window.getSelection();
+
+                          if (!selection || selection.rangeCount === 0) {
+                            return;
+                          }
+
+                          const range = selection.getRangeAt(0);
+
+                          // Kalau cursor berada di awal line
+                          if (range.collapsed && range.startOffset === 0) {
+                            // Dot pertama tidak boleh dihapus
+                            if (index === 0) {
+                              e.preventDefault();
+                              return;
+                            }
+
+                            // Dot kedua dan seterusnya boleh dihapus
+                            e.preventDefault();
+
+                            const previousLine = noteLines[index - 1];
+                            const currentContent = content;
+
+                            const newLines = [...noteLines];
+
+                            newLines[index - 1] =
+                              `${previousLine}${currentContent}`;
+
+                            newLines.splice(index, 1);
+
+                            setNotes(newLines.join("\n"));
+
+                            requestAnimationFrame(() => {
+                              const previous =
+                                mobileNoteRefs.current[index - 1];
+
+                              if (!previous) return;
+
+                              previous.focus();
+
+                              const range = document.createRange();
+                              range.selectNodeContents(previous);
+                              range.collapse(false);
+
+                              const selection = window.getSelection();
+
+                              selection?.removeAllRanges();
+                              selection?.addRange(range);
+                            });
+
+                            return;
+                          }
+                        }
+                      }}
+                      className="
+            min-w-0
+            flex-1
+            outline-none
+            break-all
+          "
+                    >
+                      {content}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </>

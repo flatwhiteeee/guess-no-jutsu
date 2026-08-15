@@ -355,6 +355,16 @@ function registerRoomHandlers(io, socket) {
     const room = getRoomData(roomCode);
 
     if (!room) return;
+
+    const currentPlayerId = room.turnOrder[room.turnIndex];
+
+    // Host tetap boleh melakukan Next Turn kapan saja.
+    // Player biasa hanya boleh melakukan Next Turn
+    // ketika sedang mendapat giliran.
+    if (socket.id !== room.host && socket.id !== currentPlayerId) {
+      return;
+    }
+
     debugTurn(room, `NEXT TURN - BEFORE - ${socket.id}`);
 
     if (room.turnIndex >= room.turnOrder.length - 1) {
