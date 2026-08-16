@@ -74,6 +74,14 @@ function registerRoomHandlers(io, socket) {
     console.log("CREATE ROOM EVENT");
     console.log(settings);
 
+    if (![180, 300, 480].includes(settings.timerDuration)) {
+      socket.emit(
+        "create-room-failed",
+        "Silakan pilih durasi timer terlebih dahulu.",
+      );
+      return;
+    }
+
     const roomCode = createRoom(socket.id, settings);
 
     console.log(roomCode);
@@ -156,57 +164,67 @@ function registerRoomHandlers(io, socket) {
   // =========================
   // UPDATE ROOM SETTINGS
   // =========================
-  socket.on("update-room-settings", ({ roomCode, difficulty, maxPlayers }) => {
-    const room = getRoomData(roomCode);
+  socket.on(
+    "update-room-settings",
+    ({ roomCode, difficulty, maxPlayers, timerDuration }) => {
+      const room = getRoomData(roomCode);
 
-    if (!room) {
-      socket.emit("update-room-settings-failed", "Room tidak ditemukan.");
-      return;
-    }
+      if (!room) {
+        socket.emit("update-room-settings-failed", "Room tidak ditemukan.");
+        return;
+      }
 
-    // Hanya host yang boleh mengubah setting
-    if (!isHost(roomCode, socket.id)) {
-      socket.emit(
-        "update-room-settings-failed",
-        "Hanya host yang dapat mengubah setting room.",
-      );
-      return;
-    }
+      // Hanya host yang boleh mengubah setting
+      if (!isHost(roomCode, socket.id)) {
+        socket.emit(
+          "update-room-settings-failed",
+          "Hanya host yang dapat mengubah setting room.",
+        );
+        return;
+      }
 
-    // Setting hanya bisa diubah selama lobby
-    if (room.status !== "lobby") {
-      socket.emit(
-        "update-room-settings-failed",
-        "Setting tidak dapat diubah setelah game dimulai.",
-      );
-      return;
-    }
+      // Setting hanya bisa diubah selama lobby
+      if (room.status !== "lobby") {
+        socket.emit(
+          "update-room-settings-failed",
+          "Setting tidak dapat diubah setelah game dimulai.",
+        );
+        return;
+      }
+      if (![180, 300, 480].includes(timerDuration)) {
+        socket.emit(
+          "update-room-settings-failed",
+          "Durasi timer harus 3, 5, atau 8 menit.",
+        );
+        return;
+      }
+      // Jangan sampai max player lebih kecil dari jumlah player yang sudah ada
+      if (maxPlayers < room.players.length) {
+        socket.emit(
+          "update-room-settings-failed",
+          `Maximum players tidak boleh kurang dari jumlah player saat ini (${room.players.length}).`,
+        );
+        return;
+      }
 
-    // Jangan sampai max player lebih kecil dari jumlah player yang sudah ada
-    if (maxPlayers < room.players.length) {
-      socket.emit(
-        "update-room-settings-failed",
-        `Maximum players tidak boleh kurang dari jumlah player saat ini (${room.players.length}).`,
-      );
-      return;
-    }
+      const updatedRoom = updateRoomSettings(roomCode, {
+        difficulty,
+        maxPlayers,
+        timerDuration,
+      });
 
-    const updatedRoom = updateRoomSettings(roomCode, {
-      difficulty,
-      maxPlayers,
-    });
+      if (!updatedRoom) {
+        socket.emit(
+          "update-room-settings-failed",
+          "Gagal memperbarui setting room.",
+        );
+        return;
+      }
 
-    if (!updatedRoom) {
-      socket.emit(
-        "update-room-settings-failed",
-        "Gagal memperbarui setting room.",
-      );
-      return;
-    }
-
-    // Kirim room terbaru ke semua player
-    io.to(roomCode).emit("room-data", updatedRoom);
-  });
+      // Kirim room terbaru ke semua player
+      io.to(roomCode).emit("room-data", updatedRoom);
+    },
+  );
 
   // =========================
   // READY

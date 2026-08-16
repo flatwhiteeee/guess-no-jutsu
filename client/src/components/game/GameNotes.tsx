@@ -441,7 +441,10 @@ export default function GameNotes({
                 const content = line.startsWith("• ") ? line.slice(2) : line;
 
                 return (
-                  <div key={index} className="flex items-start">
+                  <div
+                    key={`${resetKey}-${index}`}
+                    className="flex items-start"
+                  >
                     {/* DOT */}
                     <span
                       className="

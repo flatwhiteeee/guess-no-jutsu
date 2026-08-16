@@ -15,6 +15,7 @@ function createRoom(hostSocketId, settings) {
     difficulty: settings.difficulty,
 
     maxPlayers: settings.maxPlayers,
+    timerDuration: settings.timerDuration,
     status: "lobby",
     round: 0,
     turnIndex: 0,
@@ -35,7 +36,7 @@ function createRoom(hostSocketId, settings) {
 
         answerLeft: 3,
 
-        timerLeft: 6 * 60,
+        timerLeft: settings.timerDuration,
         timerStartedAt: null,
 
         solved: false,
@@ -118,7 +119,7 @@ function joinRoom(roomCode, socketId, playerName, sessionId = null) {
     questionLeft: 10,
 
     answerLeft: 3,
-    timerLeft: 6 * 60,
+    timerLeft: room.timerDuration,
     timerStartedAt: null,
 
     solved: false,
@@ -160,6 +161,7 @@ function updateRoomSettings(roomCode, settings) {
   room.category = settings.category || room.category;
   room.difficulty = settings.difficulty || room.difficulty;
   room.maxPlayers = settings.maxPlayers || room.maxPlayers;
+  room.timerDuration = settings.timerDuration || room.timerDuration;
 
   return room;
 }
@@ -321,6 +323,9 @@ function startGame(roomCode) {
     player.solved = false;
     player.answeredThisRound = false;
     player.leftGame = false;
+
+    player.timerLeft = room.timerDuration;
+    player.timerStartedAt = null;
   });
 
   return room;
@@ -341,7 +346,7 @@ function resetGame(roomCode) {
     player.questionLeft = 10;
     player.answerLeft = 3;
 
-    player.timerLeft = 6 * 60;
+    player.timerLeft = room.timerDuration;
     player.timerStartedAt = null;
 
     player.solved = false;
@@ -373,7 +378,7 @@ function returnToLobby(roomCode) {
     player.questionLeft = 10;
     player.answerLeft = 3;
 
-    player.timerLeft = 6 * 60;
+    player.timerLeft = room.timerDuration;
     player.timerStartedAt = null;
 
     player.solved = false;

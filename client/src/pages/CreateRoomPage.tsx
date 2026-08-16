@@ -13,6 +13,7 @@ export default function CreateRoomPage() {
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [difficulty, setDifficulty] = useState("Hard");
   const [category, setCategory] = useState("Naruto");
+  const [timerDuration, setTimerDuration] = useState<number | null>(null);
   const navigate = useNavigate();
   const playerName = localStorage.getItem("playerName") || "Player";
   const [creating, setCreating] = useState(false);
@@ -45,16 +46,13 @@ export default function CreateRoomPage() {
 
     if (creating) return;
 
+    if (timerDuration === null) {
+      return;
+    }
+
     setCreating(true);
 
     console.log("EMIT CREATE");
-
-    socket.emit("create-room", {
-      playerName,
-      category,
-      difficulty,
-      maxPlayers,
-    });
 
     socket.once("room-created", (roomCode) => {
       console.log("ROOM CREATED", roomCode);
@@ -64,6 +62,14 @@ export default function CreateRoomPage() {
       navigate("/lobby", {
         state: { roomCode },
       });
+    });
+
+    socket.emit("create-room", {
+      playerName,
+      category,
+      difficulty,
+      maxPlayers,
+      timerDuration,
     });
   };
 
@@ -110,7 +116,7 @@ export default function CreateRoomPage() {
     absolute
     left-1/2
     top-1/2
-    w-[500px] md:w-[800px]
+    w-[560px] md:w-[1000px]
     max-w-none
     -translate-x-1/2
     -translate-y-1/2
@@ -139,9 +145,9 @@ export default function CreateRoomPage() {
                 alt="Create Room"
                 className="
     mb-6
-    w-[240px]
+    w-[300px]
     sm:w-[280px]
-    md:w-[300px]
+    md:w-[500px]
     translate-y-[15px]
     md:translate-y-[40px]
   "
@@ -150,13 +156,17 @@ export default function CreateRoomPage() {
               {/* Existing form */}
               <div
                 className="
-        mx-auto
-        w-full
-        max-w-[230px]
-        space-y-8 md:space-y-5
-        sm:max-w-[340px]
-        md:max-w-[440px]
-      "
+    mx-auto
+    w-full
+    max-w-[230px]
+    space-y-8 md:space-y-5
+    sm:max-w-[340px]
+    md:max-w-[440px]
+    md:space-y-5
+    md:translate-y-[-65px]
+    md:translate-y-0
+    -translate-y-[20px]
+  "
               >
                 <div className="mx-auto md:w-[480px] md:-translate-x-[23px]">
                   <CategorySelector value={category} onChange={setCategory} />
@@ -231,6 +241,67 @@ export default function CreateRoomPage() {
                       aria-label="Increase maximum players"
                     >
                       +
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <h2 className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.28em] text-[#e6d9b8]/80 sm:text-xs">
+                    Timer
+                  </h2>
+
+                  <div className="flex items-center justify-center gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setTimerDuration(180)}
+                      className={`
+                        min-w-[72px] rounded-sm border px-3 md:px-10
+                        py-2 md:py-3
+                        text-[10px] md:text-[12px] font-semibold uppercase tracking-[0.12em]
+                        transition-all duration-150
+                        ${
+                          timerDuration === 180
+                            ? "border-[#f0e5c9] bg-[#e6d9b8] text-[#172014] shadow-[0_3px_8px_rgba(0,0,0,0.3)]"
+                            : "border-[#e6d9b8]/60 bg-[#172014]/60 text-[#e6d9b8]/80 hover:bg-[#d4c7a6]/30"
+                        }
+                      `}
+                    >
+                      3 Min
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTimerDuration(300)}
+                      className={`
+                        min-w-[72px] rounded-sm border px-3 md:px-10
+                        py-2 md:py-3
+                        text-[10px] md:text-[12px] font-semibold uppercase tracking-[0.12em]
+                        transition-all duration-150
+                        ${
+                          timerDuration === 300
+                            ? "border-[#f0e5c9] bg-[#e6d9b8] text-[#172014] shadow-[0_3px_8px_rgba(0,0,0,0.3)]"
+                            : "border-[#e6d9b8]/60 bg-[#172014]/60 text-[#e6d9b8]/80 hover:bg-[#d4c7a6]/30"
+                        }
+                      `}
+                    >
+                      5 Min
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTimerDuration(480)}
+                      className={`
+                        min-w-[72px] rounded-sm border px-3 md:px-10
+                        py-2 md:py-3
+                        text-[10px] md:text-[12px] font-semibold uppercase tracking-[0.12em]
+                        transition-all duration-150
+                        ${
+                          timerDuration === 480
+                            ? "border-[#f0e5c9] bg-[#e6d9b8] text-[#172014] shadow-[0_3px_8px_rgba(0,0,0,0.3)]"
+                            : "border-[#e6d9b8]/60 bg-[#172014]/60 text-[#e6d9b8]/80 hover:bg-[#d4c7a6]/30"
+                        }
+                      `}
+                    >
+                      8 Min
                     </button>
                   </div>
                 </div>

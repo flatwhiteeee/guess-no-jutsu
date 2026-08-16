@@ -26,6 +26,9 @@ export default function LobbyPage() {
   const [editDifficulty, setEditDifficulty] = useState("");
   const [editMaxPlayers, setEditMaxPlayers] = useState(2);
   const [editCategory, setEditCategory] = useState("");
+  const [editTimerDuration, setEditTimerDuration] = useState<number | null>(
+    null,
+  );
   const isHost = roomData?.host === socket.id;
   const [notification, setNotification] = useState({
     open: false,
@@ -189,8 +192,9 @@ export default function LobbyPage() {
                       onClick={() => {
                         setEditDifficulty(roomData?.difficulty || "");
                         setEditMaxPlayers(roomData?.maxPlayers || 2);
-                        setShowSettings(true);
                         setEditCategory(roomData?.category || "");
+                        setEditTimerDuration(roomData?.timerDuration ?? null);
+                        setShowSettings(true);
                       }}
                       title="Room Settings"
                       aria-label="Room Settings"
@@ -201,7 +205,7 @@ export default function LobbyPage() {
                   )}
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-2 md:gap-3">
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                   <div className="rounded-lg border border-slate-300/10 bg-slate-900/35 px-3 py-2.5 text-center backdrop-blur-[2px]">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       Category
@@ -226,6 +230,16 @@ export default function LobbyPage() {
                     </p>
                     <p className="mt-1 text-sm font-semibold text-slate-100 md:text-[15px]">
                       {roomData?.maxPlayers}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-300/10 bg-slate-900/35 px-3 py-2.5 text-center backdrop-blur-[2px]">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Timer
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-100 md:text-[15px]">
+                      {roomData?.timerDuration
+                        ? `${roomData.timerDuration / 60} Min`
+                        : "-"}
                     </p>
                   </div>
                 </div>
@@ -366,6 +380,25 @@ export default function LobbyPage() {
                     +
                   </button>
                 </div>
+                <div>
+                  <p className="mb-3 font-semibold text-slate-300">Timer</p>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {[180, 300, 480].map((duration) => (
+                      <button
+                        key={duration}
+                        onClick={() => setEditTimerDuration(duration)}
+                        className={`rounded-xl border p-3 font-semibold transition ${
+                          editTimerDuration === duration
+                            ? "border-[#D39A5A] bg-[#6B5140] text-[#E7C28A]"
+                            : "border-[#344252] bg-[#202830] text-[#E7E2D8] hover:bg-[#344252]"
+                        }`}
+                      >
+                        {duration / 60} Min
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -384,6 +417,7 @@ export default function LobbyPage() {
                     category: editCategory,
                     difficulty: editDifficulty,
                     maxPlayers: editMaxPlayers,
+                    timerDuration: editTimerDuration,
                   });
 
                   setShowSettings(false);
